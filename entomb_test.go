@@ -59,7 +59,7 @@ func TestCreateReadKey(t *testing.T) {
 
 func TestNewTomb(t *testing.T) {
 	keyPath := "test_key"
-	tomb, err := NewTomb(keyPath)
+	tomb, err := NewTomb(keyPath, true, true)
 	assert.NoError(t, err)
 	assert.NotNil(t, tomb)
 
@@ -69,7 +69,7 @@ func TestNewTomb(t *testing.T) {
 
 func TestTomb_checkPerms(t *testing.T) {
 	keyPath := "test_key"
-	tomb, err := NewTomb(keyPath)
+	tomb, err := NewTomb(keyPath, true, true)
 	assert.NoError(t, err)
 
 	hashed, err := hashSHA([]byte(tomb.hu))
@@ -83,7 +83,7 @@ func TestTomb_checkPerms(t *testing.T) {
 
 func TestTomb_EncryptDecrypt(t *testing.T) {
 	keyPath := "test_key"
-	tomb, err := NewTomb(keyPath)
+	tomb, err := NewTomb(keyPath, true, true)
 	assert.NoError(t, err)
 
 	msg := []byte("test message")
