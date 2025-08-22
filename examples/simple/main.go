@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/engmtcdrm/go-entomb"
 )
@@ -19,7 +18,7 @@ func main() {
 		}
 	}()
 
-	t, err := entomb.NewTomb(filepath.Join(tempDir, ".key"))
+	t, err := entomb.NewTomb("___key.key", true, false)
 	if err != nil {
 		panic(err)
 	}
