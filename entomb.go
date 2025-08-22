@@ -8,7 +8,6 @@ import (
 	"log"
 	"log/slog"
 	"math/big"
-	"net"
 	"os"
 	"os/user"
 
@@ -190,18 +189,30 @@ type Tomb struct {
 // The keyPath is the path to the key file. If the key file does not exist, a new
 // key will be generated and saved to the key file. If the key file exists, the key
 // will be read from the file.
-func NewTomb(keyPath string) (*Tomb, error) {
-	h, err := net.LookupAddr("\x31\x32\x37\x2e\x30\x2e\x30\x2e\x31")
-	if err != nil {
-		return nil, err
+// The useHost and useUser parameters determine whether the hostname and username
+// should be included when encrypting/decrypting.
+func NewTomb(keyPath string, useHost bool, useUser bool) (*Tomb, error) {
+	var err error
+	var h []byte
+	var hu string
+
+	if useHost {
+		h, err = machineId()
+		if err != nil {
+			return nil, err
+		}
+
+		hu = string(h)
 	}
 
-	cu, err := user.Current()
-	if err != nil {
-		return nil, err
-	}
+	if useUser {
+		cu, err := user.Current()
+		if err != nil {
+			return nil, err
+		}
 
-	hu := h[0] + cu.Username
+		hu += cu.Username
+	}
 
 	k, err := createReadKey(keyPath, hu)
 	if err != nil {
