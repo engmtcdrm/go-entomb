@@ -1,10 +1,13 @@
 module github.com/engmtcdrm/go-entomb
 
-go 1.21.5
+go 1.23.0
+
+toolchain go1.24.3
 
 require (
 	github.com/fernet/fernet-go v0.0.0-20240119011108-303da6aec611
 	github.com/stretchr/testify v1.10.0
+	golang.org/x/sys v0.35.0
 )
 
 require (
