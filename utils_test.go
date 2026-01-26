@@ -10,7 +10,7 @@ import (
 
 func TestHashSHA(t *testing.T) {
 	data := []byte("test data")
-	hashed, err := hashSHA(data)
+	hashed, err := hashValue(data)
 	assert.NoError(t, err)
 	assert.NotNil(t, hashed)
 	assert.Equal(t, 64, len(hashed))
@@ -18,37 +18,39 @@ func TestHashSHA(t *testing.T) {
 
 func TestGetRandEncrypt(t *testing.T) {
 	size := 32
-	encrypted, err := getRandEncrypt(size)
+	encrypted, err := getRandomEncrypt(size)
 	assert.NoError(t, err)
 	assert.NotNil(t, encrypted)
 }
 
 func TestSaltValue(t *testing.T) {
-	var k fernet.Key
-	err := k.Generate()
+	var key fernet.Key
+	err := key.Generate()
 	assert.NoError(t, err)
 
 	data := []byte("test data")
-	hu := []byte("test hu")
-	salted, err := saltValue(k, data, hu)
+	hostUser := []byte("test hu")
+	salted, err := saltValue(key, data, hostUser)
 	assert.NoError(t, err)
 	assert.NotNil(t, salted)
 }
 
 func TestCreateReadKey(t *testing.T) {
 	keyPath := "test_key"
-	hu := "test hu"
+	hostUser := "test hu"
+	hostUserHash, err := hashValue([]byte(hostUser))
+	assert.NoError(t, err)
 
 	// Ensure the key file does not exist before the test
 	os.Remove(keyPath)
 
 	// Test key creation
-	key, err := createReadKey(keyPath, hu)
+	key, err := createReadKey(keyPath, hostUserHash)
 	assert.NoError(t, err)
 	assert.NotNil(t, key)
 
 	// Test key reading
-	readKey, err := createReadKey(keyPath, hu)
+	readKey, err := createReadKey(keyPath, hostUserHash)
 	assert.NoError(t, err)
 	assert.Equal(t, key, readKey)
 

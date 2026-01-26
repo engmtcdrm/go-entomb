@@ -3,21 +3,19 @@ package entomb
 import (
 	"bytes"
 	"errors"
-	"os/user"
+	"path/filepath"
+	"slices"
 
 	"github.com/fernet/fernet-go"
 )
-
-// The code below is intentionally uncommented in an attempt to obfuscate and
-// make it harder to understand. There are intentional redundant calls to try
-// again, to obfuscate the code even further.
 
 // Encryptor/Decryptor
 //
 // Into the depths we dive, where the secrets lie...
 type Tomb struct {
-	hu string
-	k  fernet.Key
+	key         *fernet.Key
+	secretsPath string
+	hostUserEnc []byte
 }
 
 // Creates a new Tomb
@@ -26,104 +24,90 @@ type Tomb struct {
 // key will be generated and saved to the key file. If the key file exists, the key
 // will be read from the file.
 // The useHost and useUser parameters determine whether the hostname and username
-// should be included when encrypting/decrypting.
+// should be included when encrypting/decrypting secrets.
 func NewTomb(keyPath string, useHost bool, useUser bool) (*Tomb, error) {
 	var err error
-	var h []byte
-	var hu string
 
-	if useHost {
-		h, err = machineId()
-		if err != nil {
-			return nil, err
-		}
-
-		hu = string(h)
+	if keyPath == "" {
+		keyPath = "tomb.key"
 	}
 
-	if useUser {
-		cu, err := user.Current()
-		if err != nil {
-			return nil, err
-		}
+	keyPath = filepath.Clean(keyPath)
 
-		hu += cu.Username
+	hostUserHash, err := encryptHostUser(useHost, useUser)
+	if err != nil {
+		return nil, err
 	}
 
-	k, err := createReadKey(keyPath, hu)
+	key, err := createReadKey(keyPath, hostUserHash)
+	if err != nil {
+		return nil, err
+	}
+
+	encHostUserHash, err := fernet.EncryptAndSign(hostUserHash, &key)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Tomb{
-		hu: hu,
-		k:  k,
+		key:         &key,
+		hostUserEnc: encHostUserHash,
 	}, nil
+}
+
+func (tomb *Tomb) SecretsPath(path string) {
+	path = filepath.Clean(path)
+	tomb.secretsPath = path
 }
 
 // Encrypts the message and returns the encrypted data
 func (tomb *Tomb) Encrypt(msg []byte) ([]byte, error) {
-	e1, err := getRandEncrypt(size)
+	encRandomHead, err := getRandomEncrypt(hashSize)
 	if err != nil {
 		return nil, err
 	}
 
-	e2, err := fernet.EncryptAndSign(msg, &tomb.k)
+	encMsg, err := fernet.EncryptAndSign(msg, tomb.key)
 	if err != nil {
 		return nil, err
 	}
 	msg = nil
 
-	hs, err := hashSHA([]byte(tomb.hu))
+	encRandomTail, err := getRandomEncrypt(hashSize)
 	if err != nil {
 		return nil, err
 	}
 
-	e3, err := fernet.EncryptAndSign(hs, &tomb.k)
-	if err != nil {
-		return nil, err
-	}
+	finalData := slices.Concat(encRandomHead, encMsg, tomb.hostUserEnc, encRandomTail)
 
-	enc4, err := getRandEncrypt(size)
-	if err != nil {
-		return nil, err
-	}
-
-	return append(append(append(e1, e2...), e3...), enc4...), nil
+	return finalData, nil
 }
 
 // Decrypts the data and returns the decrypted message
 func (tomb *Tomb) Decrypt(data []byte) ([]byte, error) {
-	e1, err := getRandEncrypt(size)
+	encRandomHead, err := getRandomEncrypt(hashSize)
 	if err != nil {
 		return nil, err
 	}
 
-	hs, err := hashSHA([]byte(tomb.hu))
+	encRandomTail, err := getRandomEncrypt(hashSize)
 	if err != nil {
 		return nil, err
 	}
 
-	e2, err := fernet.EncryptAndSign(hs, &tomb.k)
+	key, err := fernet.DecodeKeys(tomb.key.Encode())
 	if err != nil {
 		return nil, err
 	}
 
-	e3, err := getRandEncrypt(size)
-	if err != nil {
-		return nil, err
-	}
+	// Retrieve the encrypted message and the encrypted host/user hash
+	encMsg := data[len(encRandomHead) : len(data)-(len(tomb.hostUserEnc)+len(encRandomTail))]
+	encHostUserHash := data[len(encRandomHead)+len(encMsg) : len(data)-len(encRandomTail)]
+	decHostUserHash := fernet.VerifyAndDecrypt(encHostUserHash, 0, key)
+	decHostUserHash2 := fernet.VerifyAndDecrypt(tomb.hostUserEnc, 0, key)
 
-	td := data[len(e1) : len(data)-(len(e2)+len(e3))]
-	hud := data[len(e1)+len(td) : len(data)-len(e3)]
-
-	k, err := fernet.DecodeKeys(tomb.k.Encode())
-	if err != nil {
-		return nil, err
-	}
-
-	if tomb.checkPerms(fernet.VerifyAndDecrypt(hud, 0, k)) {
-		msg := fernet.VerifyAndDecrypt(td, 0, k)
+	if bytes.Equal(decHostUserHash, decHostUserHash2) {
+		msg := fernet.VerifyAndDecrypt(encMsg, 0, key)
 
 		if msg != nil {
 			return msg, nil
@@ -131,14 +115,4 @@ func (tomb *Tomb) Decrypt(data []byte) ([]byte, error) {
 	}
 
 	return nil, errors.New("an error occurred during decryption")
-}
-
-// Checks the permissions of the user
-func (tomb *Tomb) checkPerms(checkData []byte) bool {
-	hs, err := hashSHA([]byte(tomb.hu))
-	if err != nil {
-		return false
-	}
-
-	return bytes.Equal(checkData, hs)
 }

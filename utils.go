@@ -9,37 +9,38 @@ import (
 	"log/slog"
 	"math/big"
 	"os"
+	"slices"
 
 	"github.com/fernet/fernet-go"
 )
 
-// The code below is intentionally uncommented in an attempt to obfuscate and
-// make it harder to understand. There are intentional redundant calls to try
-// again, to obfuscate the code even further.
+const maxRandomHashDataSize = 9901 // Magic number for maximum random hash data size
 
-var size int
+var hashSize int
 
 func init() {
-	hash, err := hashSHA()
+	hash, err := hashValue(nil)
 	if err != nil {
 		log.Fatalf("Failed to generate hash: %v", err)
 	}
-	size = len(hash)
+	hashSize = len(hash)
 }
 
-func getRandEncrypt(s int) ([]byte, error) {
+// getRandomEncrypt generates random data of size s, encrypts it with a random
+// Fernet key, and returns the encrypted data.
+func getRandomEncrypt(s int) ([]byte, error) {
 	d := make([]byte, s)
 	_, err := rand.Read(d)
 	if err != nil {
 		return nil, err
 	}
 
-	var k fernet.Key
-	if err := k.Generate(); err != nil {
+	var key fernet.Key
+	if err := key.Generate(); err != nil {
 		return nil, err
 	}
 
-	t, err := fernet.EncryptAndSign(d, &k)
+	t, err := fernet.EncryptAndSign(d, &key)
 	if err != nil {
 		return nil, err
 	}
@@ -47,52 +48,43 @@ func getRandEncrypt(s int) ([]byte, error) {
 	return t, nil
 }
 
-func saltValue(k fernet.Key, data []byte, hu []byte) ([]byte, error) {
-	r, err := rand.Int(rand.Reader, big.NewInt(9001))
-	if err != nil {
-		return nil, err
-	}
-	r = r.Add(r, big.NewInt(1000))
-
-	e1, err := getRandEncrypt(int(r.Int64()))
+func saltValue(key fernet.Key, data []byte, hostUserHash []byte) ([]byte, error) {
+	encRandomHead, err := getRandomEncrypt(maxRandomHashDataSize)
 	if err != nil {
 		return nil, err
 	}
 
-	e2, err := getRandEncrypt(size)
+	encRandomHash, err := getRandomEncrypt(hashSize)
 	if err != nil {
 		return nil, err
 	}
 
-	hs, err := hashSHA([]byte(hu))
+	encHostUser, err := fernet.EncryptAndSign(hostUserHash, &key)
 	if err != nil {
 		return nil, err
 	}
 
-	e3, err := fernet.EncryptAndSign(hs, &k)
+	encRandomTail, err := getRandomEncrypt(maxRandomHashDataSize)
 	if err != nil {
 		return nil, err
 	}
 
-	e4, err := getRandEncrypt(int(r.Int64()))
-	if err != nil {
-		return nil, err
-	}
+	finalData := slices.Concat(encRandomHead, encRandomHash, data, encHostUser, encRandomTail)
 
-	return append(append(append(append(e1, e2...), data...), e3...), e4...), nil
+	return finalData, nil
 }
 
-func createReadKey(keyPath string, hu string) (fernet.Key, error) {
-	var k fernet.Key
+func createReadKey(keyPath string, hostUserHash []byte) (fernet.Key, error) {
+	var key fernet.Key
 
 	if _, err := os.Stat(keyPath); os.IsNotExist(err) {
 		slog.Debug("Key file does not exist. Creating a new key.")
 
-		if err := k.Generate(); err != nil {
+		if err := key.Generate(); err != nil {
 			return fernet.Key{}, err
 		}
 
-		sk, err := saltValue(k, []byte(k.Encode()), []byte(hu))
+		sk, err := saltValue(key, []byte(key.Encode()), hostUserHash)
 		if err != nil {
 			return fernet.Key{}, err
 		}
@@ -101,47 +93,42 @@ func createReadKey(keyPath string, hu string) (fernet.Key, error) {
 			return fernet.Key{}, err
 		}
 
-		return k, nil
+		return key, nil
 	} else {
 		slog.Debug("Key file exists. Reading key from file.")
 
-		d, err := os.ReadFile(keyPath)
+		fileBytes, err := os.ReadFile(keyPath)
 		if err != nil {
 			return fernet.Key{}, err
 		}
 
-		e1, err := getRandEncrypt(size)
+		encRandomHashHead, err := getRandomEncrypt(hashSize)
 		if err != nil {
 			return fernet.Key{}, err
 		}
 
-		e2, err := getRandEncrypt(size)
+		encRandomHashTail, err := getRandomEncrypt(hashSize)
 		if err != nil {
 			return fernet.Key{}, err
 		}
 
-		if err := k.Generate(); err != nil {
+		if err := key.Generate(); err != nil {
 			return fernet.Key{}, err
 		}
 
-		ld := (len(d) - (len(e1) + len(k.Encode()) + len(e2))) / 2
-		d = d[ld : len(d)-ld]
-		kd := d[len(e1) : len(e1)+len(k.Encode())]
-		hue := d[len(e1)+len(k.Encode()):]
+		ld := (len(fileBytes) - (len(encRandomHashHead) + len(key.Encode()) + len(encRandomHashTail))) / 2
+		fileBytes = fileBytes[ld : len(fileBytes)-ld]
+		kd := fileBytes[len(encRandomHashHead) : len(encRandomHashHead)+len(key.Encode())]
+		hue := fileBytes[len(encRandomHashHead)+len(key.Encode()):]
 
 		k3, err := fernet.DecodeKeys(string(kd))
 		if err != nil {
 			return fernet.Key{}, err
 		}
 
-		hud := fernet.VerifyAndDecrypt(hue, 0, k3)
+		hostUserDecoded := fernet.VerifyAndDecrypt(hue, 0, k3)
 
-		hs, err := hashSHA([]byte(hu))
-		if err != nil {
-			return fernet.Key{}, err
-		}
-
-		if !bytes.Equal(hud, hs) {
+		if !bytes.Equal(hostUserDecoded, hostUserHash) {
 			return fernet.Key{}, errors.New("an error occurred during key verification")
 		}
 
@@ -149,28 +136,33 @@ func createReadKey(keyPath string, hu string) (fernet.Key, error) {
 	}
 }
 
-func hashSHA(data ...[]byte) ([]byte, error) {
-	var d2h []byte
+// hashValue returns a hash of the given data. If data is nil or empty, it
+// generates random data with a length between 1000 and [maxRandomHashDataSize]
+// bytes to hash.
+func hashValue(data []byte) ([]byte, error) {
+	if data == nil {
+		data = []byte{}
+	}
 
 	if len(data) == 0 {
-		n, err := rand.Int(rand.Reader, big.NewInt(9901))
+		n, err := rand.Int(rand.Reader, big.NewInt(maxRandomHashDataSize))
 		if err != nil {
 			return nil, err
 		}
-		n = n.Add(n, big.NewInt(100))
+		n = n.Add(n, big.NewInt(1000)) // Ensure at least 1000 bytes
 
-		d2h = make([]byte, n.Int64())
-		_, err = rand.Read(d2h)
+		data = make([]byte, n.Int64())
+		_, err = rand.Read(data)
 		if err != nil {
 			return nil, err
 		}
-	} else {
-		d2h = data[0]
 	}
 
 	h := sha512.New()
-
-	h.Write(d2h)
+	_, err := h.Write(data)
+	if err != nil {
+		return nil, err
+	}
 
 	return h.Sum(nil), nil
 }

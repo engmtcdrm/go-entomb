@@ -18,20 +18,6 @@ func TestNewTomb(t *testing.T) {
 	os.Remove(keyPath)
 }
 
-func TestTomb_checkPerms(t *testing.T) {
-	keyPath := "test_key"
-	tomb, err := NewTomb(keyPath, true, true)
-	assert.NoError(t, err)
-
-	hashed, err := hashSHA([]byte(tomb.hu))
-	assert.NoError(t, err)
-	checkData := hashed
-	assert.True(t, tomb.checkPerms(checkData))
-
-	// Clean up
-	os.Remove(keyPath)
-}
-
 func TestTomb_EncryptDecrypt(t *testing.T) {
 	keyPath := "test_key"
 	tomb, err := NewTomb(keyPath, true, true)
