@@ -9,50 +9,46 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewTomb(t *testing.T) {
-	t.Run("Create Tomb with host and user", func(t *testing.T) {
-		keyPath := path.Join(t.TempDir(), "test_key")
-		k, err := GetKeyHostUser(keyPath, true, true)
-		assert.NoError(t, err)
+func TestNewEntomb(t *testing.T) {
+	keyPath := path.Join(t.TempDir(), "test_key")
+	k, err := GetKeyHostUser(keyPath, true, true)
+	assert.NoError(t, err)
 
-		tomb, err := NewTombHostUser(k, true, true)
+	t.Run("Create Entomb with host and user", func(t *testing.T) {
+		entomb, err := NewEntombHostUser(k, true, true)
 		assert.NoError(t, err)
-		assert.NotNil(t, tomb)
+		assert.NotNil(t, entomb)
 	})
 
 	t.Run("Create Tomb without host and user", func(t *testing.T) {
-		keyPath := path.Join(t.TempDir(), "test_key")
-		k, err := GetKeyHostUser(keyPath, true, true)
-		assert.NoError(t, err)
-
-		tomb, err := NewTombHostUser(k, false, false)
+		tomb, err := NewEntombHostUser(k, false, false)
 		assert.NoError(t, err)
 		assert.NotNil(t, tomb)
 	})
 
-	t.Run("Create Tomb with nil key value", func(t *testing.T) {
-		tomb, err := NewTombHostUser(nil, true, true)
+	t.Run("Create Entomb with nil key value", func(t *testing.T) {
+		entomb, err := NewEntombHostUser(nil, true, true)
 		assert.Error(t, err)
-		assert.Nil(t, tomb)
+		assert.Nil(t, entomb)
 
 		os.RemoveAll("tomb.key")
 	})
 }
 
-func TestTombEncryptDecrypt(t *testing.T) {
+func TestEntombEncryptDecrypt(t *testing.T) {
 	keyPath := path.Join(t.TempDir(), "test_key")
 	k, err := GetKeyHostUser(keyPath, true, true)
 	assert.NoError(t, err)
 
-	tomb, err := NewTombHostUser(k, true, true)
+	entomb, err := NewEntombHostUser(k, true, true)
 	assert.NoError(t, err)
 
 	msg := []byte("test message")
-	encrypted, err := tomb.Encrypt(msg)
+	encrypted, err := entomb.Encrypt(msg)
 	assert.NoError(t, err)
 	assert.NotNil(t, encrypted)
 
-	decrypted, err := tomb.Decrypt(encrypted)
+	decrypted, err := entomb.Decrypt(encrypted)
 	assert.NoError(t, err)
 	assert.NotNil(t, decrypted)
 	assert.True(t, bytes.Equal(msg, decrypted))
