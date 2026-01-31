@@ -12,7 +12,9 @@ build:
 	cd ..
 
 run:
-	@go run examples/simple/main.go
+	@cd examples; \
+	go run main.go; \
+	cd ..
 
 test:
 	@go test -timeout 30s ./...
