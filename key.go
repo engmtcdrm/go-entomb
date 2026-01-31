@@ -13,10 +13,10 @@ var keyMutex sync.RWMutex
 
 // GetKeyHostUser generates a new encryption key or reads an existing one from the specified path.
 // If useHost or useUser is true, the host/user hash will be included in the key to bind it to the host/user.
-func GetKeyHostUser(keyPath string, useHost, useUser bool) (fernet.Key, error) {
+func GetKeyHostUser(keyPath string, useHost, useUser bool) (*fernet.Key, error) {
 	hostUserHash, err := hashHostUser(useHost, useUser)
 	if err != nil {
-		return fernet.Key{}, err
+		return nil, err
 	}
 
 	return GetKey(keyPath, hostUserHash)
@@ -24,7 +24,7 @@ func GetKeyHostUser(keyPath string, useHost, useUser bool) (fernet.Key, error) {
 
 // GetKey generates a new encryption key or reads an existing one from the specified path.
 // The passphrase is used for verfication when reading the key and tomb decryption.
-func GetKey(keyPath string, passphrase []byte) (fernet.Key, error) {
+func GetKey(keyPath string, passphrase []byte) (*fernet.Key, error) {
 	if _, err := os.Stat(keyPath); err == nil {
 		return readKey(keyPath, passphrase)
 	}
@@ -33,30 +33,30 @@ func GetKey(keyPath string, passphrase []byte) (fernet.Key, error) {
 }
 
 // readKey reads an existing encryption key from the specified path.
-func readKey(keyPath string, passphrase []byte) (fernet.Key, error) {
+func readKey(keyPath string, passphrase []byte) (*fernet.Key, error) {
 	// Read the key from the file with shared lock
 	keyMutex.RLock()
 	defer keyMutex.RUnlock()
 
 	fileBytes, err := os.ReadFile(keyPath)
 	if err != nil {
-		return fernet.Key{}, err
+		return nil, err
 	}
 
 	encryptedRandHashHead, err := getRandomEncrypt(hashSize)
 	if err != nil {
-		return fernet.Key{}, err
+		return nil, err
 	}
 
 	encryptedRandHashTail, err := getRandomEncrypt(hashSize)
 	if err != nil {
-		return fernet.Key{}, err
+		return nil, err
 	}
 
 	var key fernet.Key
 
 	if err := key.Generate(); err != nil {
-		return fernet.Key{}, err
+		return nil, err
 	}
 
 	ld := (len(fileBytes) - (len(encryptedRandHashHead) + len(key.Encode()) + len(encryptedRandHashTail))) / 2
@@ -66,29 +66,29 @@ func readKey(keyPath string, passphrase []byte) (fernet.Key, error) {
 
 	keys, err := fernet.DecodeKeys(string(decryptedKey))
 	if err != nil {
-		return fernet.Key{}, err
+		return nil, err
 	}
 
 	decryptedPassphrase := fernet.VerifyAndDecrypt(encryptedPassphrase, 0, keys)
 
 	if !bytes.Equal(decryptedPassphrase, passphrase) {
-		return fernet.Key{}, errors.New("an error occurred during key verification")
+		return nil, errors.New("an error occurred during key verification")
 	}
 
-	return *keys[0], nil
+	return keys[0], nil
 }
 
 // genKey generates a new encryption key and saves it to the specified path.
-func genKey(keyPath string, passphrase []byte) (fernet.Key, error) {
+func genKey(keyPath string, passphrase []byte) (*fernet.Key, error) {
 	var key fernet.Key
 
 	if err := key.Generate(); err != nil {
-		return fernet.Key{}, err
+		return nil, err
 	}
 
 	saltKey, err := saltValue(key, []byte(key.Encode()), passphrase)
 	if err != nil {
-		return fernet.Key{}, err
+		return nil, err
 	}
 
 	// Write the key to the file with exclusive lock
@@ -96,8 +96,8 @@ func genKey(keyPath string, passphrase []byte) (fernet.Key, error) {
 	defer keyMutex.Unlock()
 
 	if err = os.WriteFile(keyPath, saltKey, 0600); err != nil {
-		return fernet.Key{}, err
+		return nil, err
 	}
 
-	return key, nil
+	return &key, nil
 }
