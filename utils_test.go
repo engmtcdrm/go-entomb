@@ -45,12 +45,12 @@ func TestCreateReadKey(t *testing.T) {
 	os.Remove(keyPath)
 
 	// Test key creation
-	key, err := createReadKey(keyPath, hostUserHash)
+	key, err := GetKey(keyPath, hostUserHash)
 	assert.NoError(t, err)
 	assert.NotNil(t, key)
 
 	// Test key reading
-	readKey, err := createReadKey(keyPath, hostUserHash)
+	readKey, err := GetKey(keyPath, hostUserHash)
 	assert.NoError(t, err)
 	assert.Equal(t, key, readKey)
 
