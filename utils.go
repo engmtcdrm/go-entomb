@@ -44,30 +44,36 @@ func getRandomEncrypt(s int) ([]byte, error) {
 	return t, nil
 }
 
-func saltValue(key fernet.Key, data []byte, hostUserHash []byte) ([]byte, error) {
-	encRandomHead, err := getRandomEncrypt(maxRandomHashDataSize)
+func saltValue(key fernet.Key, data []byte, passphrase []byte) ([]byte, error) {
+	encryptedRandHead, err := getRandomEncrypt(maxRandomHashDataSize)
 	if err != nil {
 		return nil, err
 	}
 
-	encRandomHash, err := getRandomEncrypt(hashSize)
+	encryptedRandHash, err := getRandomEncrypt(hashSize)
 	if err != nil {
 		return nil, err
 	}
 
-	encHostUser, err := fernet.EncryptAndSign(hostUserHash, &key)
+	encryptedPassphrase, err := fernet.EncryptAndSign(passphrase, &key)
 	if err != nil {
 		return nil, err
 	}
 
-	encRandomTail, err := getRandomEncrypt(maxRandomHashDataSize)
+	encryptedRandTail, err := getRandomEncrypt(maxRandomHashDataSize)
 	if err != nil {
 		return nil, err
 	}
 
-	finalData := slices.Concat(encRandomHead, encRandomHash, data, encHostUser, encRandomTail)
+	saltData := slices.Concat(
+		encryptedRandHead,
+		encryptedRandHash,
+		data,
+		encryptedPassphrase,
+		encryptedRandTail,
+	)
 
-	return finalData, nil
+	return saltData, nil
 }
 
 // hashValue returns a hash of the given data. If data is nil or empty, it
