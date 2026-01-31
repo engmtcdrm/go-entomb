@@ -9,8 +9,8 @@ import (
 	"strings"
 )
 
-// encryptHostUser generates a SHA hash based on the host machine ID and/or the current user's username.
-func encryptHostUser(useHost bool, useUser bool) ([]byte, error) {
+// hashHostUser generates a SHA hash based on the host machine ID and/or the current user's username.
+func hashHostUser(useHost bool, useUser bool) ([]byte, error) {
 	var hostUser string
 	var err error
 
