@@ -15,7 +15,7 @@ func TestNewTomb(t *testing.T) {
 		k, err := GetKeyHostUser(keyPath, true, true)
 		assert.NoError(t, err)
 
-		tomb, err := NewTomb(k, true, true)
+		tomb, err := NewTombHostUser(k, true, true)
 		assert.NoError(t, err)
 		assert.NotNil(t, tomb)
 	})
@@ -25,13 +25,13 @@ func TestNewTomb(t *testing.T) {
 		k, err := GetKeyHostUser(keyPath, true, true)
 		assert.NoError(t, err)
 
-		tomb, err := NewTomb(k, false, false)
+		tomb, err := NewTombHostUser(k, false, false)
 		assert.NoError(t, err)
 		assert.NotNil(t, tomb)
 	})
 
 	t.Run("Create Tomb with nil key value", func(t *testing.T) {
-		tomb, err := NewTomb(nil, true, true)
+		tomb, err := NewTombHostUser(nil, true, true)
 		assert.Error(t, err)
 		assert.Nil(t, tomb)
 
@@ -44,7 +44,7 @@ func TestTombEncryptDecrypt(t *testing.T) {
 	k, err := GetKeyHostUser(keyPath, true, true)
 	assert.NoError(t, err)
 
-	tomb, err := NewTomb(k, true, true)
+	tomb, err := NewTombHostUser(k, true, true)
 	assert.NoError(t, err)
 
 	msg := []byte("test message")

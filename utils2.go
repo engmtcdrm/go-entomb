@@ -3,14 +3,11 @@ package entomb
 import (
 	"crypto/rand"
 	"math/big"
-	"os"
 	"os/user"
-	"path/filepath"
 	"strings"
 )
 
-// hashHostUser generates a SHA hash based on the host machine ID and/or the current user's username.
-func hashHostUser(useHost bool, useUser bool) ([]byte, error) {
+func concatHostUser(useHost bool, useUser bool) ([]byte, error) {
 	var hostUser string
 	var err error
 
@@ -30,7 +27,17 @@ func hashHostUser(useHost bool, useUser bool) ([]byte, error) {
 		hostUser += cu.Username
 	}
 
-	hostUserHash, err := hashValue([]byte(hostUser))
+	return []byte(hostUser), nil
+}
+
+// hashHostUser generates a SHA hash based on the host machine ID and/or the current user's username.
+func hashHostUser(useHost bool, useUser bool) ([]byte, error) {
+	hostUser, err := concatHostUser(useHost, useUser)
+	if err != nil {
+		return nil, err
+	}
+
+	hostUserHash, err := hashValue(hostUser)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +47,7 @@ func hashHostUser(useHost bool, useUser bool) ([]byte, error) {
 
 // getHost retrieves the machine ID of the host system.
 func getHost() (string, error) {
-	h, err := machineId()
+	host, err := machineId()
 	if err != nil {
 		return "", err
 	}
@@ -51,23 +58,8 @@ func getHost() (string, error) {
 		"\t", "",
 		"\r", "",
 	)
-	hs := replacer.Replace(string(h))
-	return hs, nil
-}
-
-// getExecutableDir returns the directory of the currently running executable.
-func getExecutableDir() (string, error) {
-	exePath, err := os.Executable()
-	if err != nil {
-		return "", err
-	}
-
-	exePath, err = filepath.EvalSymlinks(exePath)
-	if err != nil {
-		return "", err
-	}
-
-	return filepath.Dir(exePath), nil
+	hostStr := replacer.Replace(string(host))
+	return hostStr, nil
 }
 
 func getRandomBytes() (*big.Int, error) {

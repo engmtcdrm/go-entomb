@@ -23,12 +23,21 @@ type Tomb struct {
 // will be read from the file.
 // The useHost and useUser parameters determine whether the hostname and username
 // should be included when encrypting/decrypting secrets.
-func NewTomb(key *fernet.Key, useHost bool, useUser bool) (*Tomb, error) {
+func NewTombHostUser(key *fernet.Key, useHost bool, useUser bool) (*Tomb, error) {
+	hostUser, err := concatHostUser(useHost, useUser)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewTomb(key, hostUser)
+}
+
+func NewTomb(key *fernet.Key, passphrase []byte) (*Tomb, error) {
 	if key == nil {
 		return nil, errors.New("key cannot be nil")
 	}
 
-	hashedPassphrase, err := hashHostUser(useHost, useUser)
+	hashedPassphrase, err := hashValue(passphrase)
 	if err != nil {
 		return nil, err
 	}
