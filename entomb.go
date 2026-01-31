@@ -8,9 +8,7 @@ import (
 	"github.com/fernet/fernet-go"
 )
 
-// Encryptor/Decryptor
-//
-// Into the depths we dive, where the secrets lie...
+// Entomb struct holds the encryption key and the encrypted passphrase.
 type Entomb struct {
 	key                 *fernet.Key
 	encryptedPassphrase []byte
@@ -23,10 +21,16 @@ func NewEntombHostUser(key *fernet.Key, useHost bool, useUser bool) (*Entomb, er
 		return nil, err
 	}
 
-	return NewEntomb(key, hostUser)
+	return NewEntombPassphrase(key, hostUser)
 }
 
-func NewEntomb(key *fernet.Key, passphrase []byte) (*Entomb, error) {
+// Creates a new Entomb instance without any passphrase.
+func NewEntomb(key *fernet.Key) (*Entomb, error) {
+	return NewEntombPassphrase(key, []byte{})
+}
+
+// Creates a new Entomb instance with the provided passphrase.
+func NewEntombPassphrase(key *fernet.Key, passphrase []byte) (*Entomb, error) {
 	if key == nil {
 		return nil, errors.New("key cannot be nil")
 	}
@@ -47,7 +51,7 @@ func NewEntomb(key *fernet.Key, passphrase []byte) (*Entomb, error) {
 	}, nil
 }
 
-// Encrypts the message and returns the encrypted data
+// Encrypts the message and returns the encrypted data.
 func (entomb *Entomb) Encrypt(msg []byte) ([]byte, error) {
 	encryptedRandHead, err := getRandomEncrypt(hashSize)
 	if err != nil {
@@ -75,7 +79,7 @@ func (entomb *Entomb) Encrypt(msg []byte) ([]byte, error) {
 	return finalData, nil
 }
 
-// Decrypts the data and returns the decrypted message
+// Decrypts the data and returns the decrypted message.
 func (entomb *Entomb) Decrypt(data []byte) ([]byte, error) {
 	encryptedRandHead, err := getRandomEncrypt(hashSize)
 	if err != nil {
