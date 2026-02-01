@@ -1,4 +1,4 @@
-package entomb
+package crypt
 
 import (
 	"errors"
