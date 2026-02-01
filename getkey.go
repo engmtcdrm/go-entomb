@@ -15,12 +15,12 @@ var keyMutex sync.RWMutex
 // GetKeyHostUser generates a new encryption key or reads an existing one from the specified path.
 // If useHost or useUser is true, the host/user hash will be included in the key to bind it to the host/user.
 func GetKeyHostUser(keyPath string, useHost, useUser bool) (*Key, error) {
-	hashedHostUser, err := hashHostUser(useHost, useUser)
+	hostUser, err := concatHostUser(useHost, useUser)
 	if err != nil {
 		return nil, err
 	}
 
-	return GetKey(keyPath, hashedHostUser)
+	return GetKey(keyPath, hostUser)
 }
 
 // GetKey generates a new encryption key or reads an existing one from the specified path.
@@ -43,7 +43,7 @@ func GetKey(keyPath string, passphrase []byte) (*Key, error) {
 }
 
 // readKey reads an existing encryption key from the specified path.
-func readKey(keyPath string, passphrase []byte) (*Key, error) {
+func readKey(keyPath string, hashedPassphrase []byte) (*Key, error) {
 	// Read the key from the file with shared lock
 	keyMutex.RLock()
 	defer keyMutex.RUnlock()
@@ -82,7 +82,7 @@ func readKey(keyPath string, passphrase []byte) (*Key, error) {
 
 	decryptedPassphrase := fernet.VerifyAndDecrypt(encryptedPassphrase, 0, keys)
 
-	if !bytes.Equal(decryptedPassphrase, passphrase) {
+	if !bytes.Equal(decryptedPassphrase, hashedPassphrase) {
 		return nil, errors.New("an error occurred during key verification")
 	}
 
@@ -93,14 +93,14 @@ func readKey(keyPath string, passphrase []byte) (*Key, error) {
 }
 
 // genKey generates a new encryption key and saves it to the specified path.
-func genKey(keyPath string, passphrase []byte) (*Key, error) {
+func genKey(keyPath string, hashedPassphrase []byte) (*Key, error) {
 	var key fernet.Key
 
 	if err := key.Generate(); err != nil {
 		return nil, err
 	}
 
-	saltedKey, encryptedPassphrase, err := saltKey(key, []byte(key.Encode()), passphrase)
+	saltedKey, encryptedPassphrase, err := saltKey(key, []byte(key.Encode()), hashedPassphrase)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +119,7 @@ func genKey(keyPath string, passphrase []byte) (*Key, error) {
 	}, nil
 }
 
-func saltKey(key fernet.Key, data []byte, passphrase []byte) ([]byte, []byte, error) {
+func saltKey(key fernet.Key, data []byte, hashedPassphrase []byte) ([]byte, []byte, error) {
 	encryptedRandHead, err := getRandomEncrypt(maxRandomHashDataSize)
 	if err != nil {
 		return nil, nil, err
@@ -130,7 +130,7 @@ func saltKey(key fernet.Key, data []byte, passphrase []byte) ([]byte, []byte, er
 		return nil, nil, err
 	}
 
-	encryptedPassphrase, err := fernet.EncryptAndSign(passphrase, &key)
+	encryptedPassphrase, err := fernet.EncryptAndSign(hashedPassphrase, &key)
 	if err != nil {
 		return nil, nil, err
 	}
