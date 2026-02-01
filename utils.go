@@ -5,7 +5,6 @@ import (
 	"crypto/sha512"
 	"log"
 	"math/big"
-	"slices"
 
 	"github.com/fernet/fernet-go"
 )
@@ -42,38 +41,6 @@ func getRandomEncrypt(s int) ([]byte, error) {
 	}
 
 	return t, nil
-}
-
-func saltValue(key fernet.Key, data []byte, passphrase []byte) ([]byte, error) {
-	encryptedRandHead, err := getRandomEncrypt(maxRandomHashDataSize)
-	if err != nil {
-		return nil, err
-	}
-
-	encryptedRandHash, err := getRandomEncrypt(hashSize)
-	if err != nil {
-		return nil, err
-	}
-
-	encryptedPassphrase, err := fernet.EncryptAndSign(passphrase, &key)
-	if err != nil {
-		return nil, err
-	}
-
-	encryptedRandTail, err := getRandomEncrypt(maxRandomHashDataSize)
-	if err != nil {
-		return nil, err
-	}
-
-	saltData := slices.Concat(
-		encryptedRandHead,
-		encryptedRandHash,
-		data,
-		encryptedPassphrase,
-		encryptedRandTail,
-	)
-
-	return saltData, nil
 }
 
 // hashValue returns a hash of the given data. If data is nil or empty, it

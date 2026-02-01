@@ -30,7 +30,7 @@ func TestSaltValue(t *testing.T) {
 
 	data := []byte("test data")
 	hostUser := []byte("test hu")
-	salted, err := saltValue(key, data, hostUser)
+	salted, _, err := saltKey(key, data, hostUser)
 	assert.NoError(t, err)
 	assert.NotNil(t, salted)
 }
