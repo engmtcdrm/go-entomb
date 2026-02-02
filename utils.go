@@ -21,9 +21,9 @@ func init() {
 	hashSize = len(hash)
 }
 
-// getRandomEncrypt generates random data of size s, encrypts it with a random
+// getRandEncrypt generates random data of size s, encrypts it with a random
 // Fernet key, and returns the encrypted data.
-func getRandomEncrypt(s int) ([]byte, error) {
+func getRandEncrypt(s int) ([]byte, error) {
 	d := make([]byte, s)
 	_, err := rand.Read(d)
 	if err != nil {

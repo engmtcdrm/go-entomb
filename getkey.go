@@ -53,12 +53,12 @@ func readKey(keyPath string, hashedPassphrase []byte) (*Key, error) {
 		return nil, err
 	}
 
-	encryptedRandHashHead, err := getRandomEncrypt(hashSize)
+	encryptedRandHashHead, err := getRandEncrypt(hashSize)
 	if err != nil {
 		return nil, err
 	}
 
-	encryptedRandHashTail, err := getRandomEncrypt(hashSize)
+	encryptedRandHashTail, err := getRandEncrypt(hashSize)
 	if err != nil {
 		return nil, err
 	}
@@ -120,12 +120,12 @@ func genKey(keyPath string, hashedPassphrase []byte) (*Key, error) {
 }
 
 func saltKey(key fernet.Key, data []byte, hashedPassphrase []byte) ([]byte, []byte, error) {
-	encryptedRandHead, err := getRandomEncrypt(maxRandomHashDataSize)
+	encryptedRandHead, err := getRandEncrypt(maxRandomHashDataSize)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	encryptedRandHash, err := getRandomEncrypt(hashSize)
+	encryptedRandHash, err := getRandEncrypt(hashSize)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -135,7 +135,7 @@ func saltKey(key fernet.Key, data []byte, hashedPassphrase []byte) ([]byte, []by
 		return nil, nil, err
 	}
 
-	encryptedRandTail, err := getRandomEncrypt(maxRandomHashDataSize)
+	encryptedRandTail, err := getRandEncrypt(maxRandomHashDataSize)
 	if err != nil {
 		return nil, nil, err
 	}

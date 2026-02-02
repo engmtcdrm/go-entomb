@@ -10,7 +10,7 @@ import (
 
 // Encrypts the message and returns the encrypted data.
 func Encrypt(key *Key, msg []byte) ([]byte, error) {
-	encryptedRandHead, err := getRandomEncrypt(hashSize)
+	encryptedRandHead, err := getRandEncrypt(hashSize)
 	if err != nil {
 		return nil, err
 	}
@@ -21,7 +21,7 @@ func Encrypt(key *Key, msg []byte) ([]byte, error) {
 	}
 	msg = nil
 
-	encryptedRandTail, err := getRandomEncrypt(hashSize)
+	encryptedRandTail, err := getRandEncrypt(hashSize)
 	if err != nil {
 		return nil, err
 	}
@@ -38,12 +38,12 @@ func Encrypt(key *Key, msg []byte) ([]byte, error) {
 
 // Decrypts the data and returns the decrypted message.
 func Decrypt(key *Key, data []byte) ([]byte, error) {
-	encryptedRandHead, err := getRandomEncrypt(hashSize)
+	encryptedRandHead, err := getRandEncrypt(hashSize)
 	if err != nil {
 		return nil, err
 	}
 
-	encryptedRandTail, err := getRandomEncrypt(hashSize)
+	encryptedRandTail, err := getRandEncrypt(hashSize)
 	if err != nil {
 		return nil, err
 	}

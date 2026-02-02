@@ -18,7 +18,7 @@ func TestHashSHA(t *testing.T) {
 
 func TestGetRandEncrypt(t *testing.T) {
 	size := 32
-	encrypted, err := getRandomEncrypt(size)
+	encrypted, err := getRandEncrypt(size)
 	assert.NoError(t, err)
 	assert.NotNil(t, encrypted)
 }
