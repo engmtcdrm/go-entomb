@@ -10,6 +10,14 @@ import (
 
 // Encrypts the message and returns the encrypted data.
 func Encrypt(key *Key, msg []byte) ([]byte, error) {
+	if err := validateKey(key); err != nil {
+		return nil, err
+	}
+
+	if msg == nil {
+		msg = []byte{}
+	}
+
 	encryptedRandHead, err := getRandEncrypt(hashSize)
 	if err != nil {
 		return nil, err
@@ -38,6 +46,10 @@ func Encrypt(key *Key, msg []byte) ([]byte, error) {
 
 // Decrypts the data and returns the decrypted message.
 func Decrypt(key *Key, data []byte) ([]byte, error) {
+	if err := validateKey(key); err != nil {
+		return nil, err
+	}
+
 	encryptedRandHead, err := getRandEncrypt(hashSize)
 	if err != nil {
 		return nil, err
@@ -67,4 +79,20 @@ func Decrypt(key *Key, data []byte) ([]byte, error) {
 	}
 
 	return nil, errors.New("an error occurred during decryption")
+}
+
+func validateKey(key *Key) error {
+	if key == nil {
+		return errors.New("key is nil")
+	}
+
+	if key.FernetKey == nil || bytes.Equal([]byte(key.FernetKey.Encode()), make([]byte, 32)) {
+		return errors.New("ker: invalid Fernet key")
+	}
+
+	if key.EncryptedPassphrase == nil {
+		return errors.New("key: encrypted passphrase is nil")
+	}
+
+	return nil
 }
