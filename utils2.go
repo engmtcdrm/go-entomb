@@ -1,8 +1,6 @@
 package entomb
 
 import (
-	"crypto/rand"
-	"math/big"
 	"os/user"
 	"strings"
 )
@@ -30,21 +28,6 @@ func concatHostUser(useHost bool, useUser bool) ([]byte, error) {
 	return []byte(hostUser), nil
 }
 
-// hashHostUser generates a SHA hash based on the host machine ID and/or the current user's username.
-func hashHostUser(useHost bool, useUser bool) ([]byte, error) {
-	hostUser, err := concatHostUser(useHost, useUser)
-	if err != nil {
-		return nil, err
-	}
-
-	hostUserHash, err := hashValue(hostUser)
-	if err != nil {
-		return nil, err
-	}
-
-	return hostUserHash, nil
-}
-
 // getHost retrieves the machine ID of the host system.
 func getHost() (string, error) {
 	host, err := machineId()
@@ -60,14 +43,4 @@ func getHost() (string, error) {
 	)
 	hostStr := replacer.Replace(string(host))
 	return hostStr, nil
-}
-
-func getRandomBytes() (*big.Int, error) {
-	n, err := rand.Int(rand.Reader, big.NewInt(maxRandomHashDataSize))
-	if err != nil {
-		return nil, err
-	}
-	n = n.Add(n, big.NewInt(1000)) // Ensure at least 1000 bytes
-
-	return n, nil
 }
