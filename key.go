@@ -50,6 +50,14 @@ func GetKey(keyPath string, passphrase []byte) (*Key, error) {
 
 // readKey reads an existing encryption key from the specified path.
 func readKey(keyPath string, hashedPassphrase []byte) (*Key, error) {
+	if keyPath == "" {
+		return nil, errors.New("key path is empty")
+	}
+
+	if hashedPassphrase == nil {
+		return nil, errors.New("hashed passphrase is nil")
+	}
+
 	// Read the key from the file with shared lock
 	keyMutex.RLock()
 	defer keyMutex.RUnlock()
@@ -100,6 +108,14 @@ func readKey(keyPath string, hashedPassphrase []byte) (*Key, error) {
 
 // genKey generates a new encryption key and saves it to the specified path.
 func genKey(keyPath string, hashedPassphrase []byte) (*Key, error) {
+	if keyPath == "" {
+		return nil, errors.New("key path is empty")
+	}
+
+	if hashedPassphrase == nil {
+		return nil, errors.New("hashed passphrase is nil")
+	}
+
 	var key fernet.Key
 
 	if err := key.Generate(); err != nil {
@@ -125,6 +141,7 @@ func genKey(keyPath string, hashedPassphrase []byte) (*Key, error) {
 	}, nil
 }
 
+// saltKey adds random data and encrypts the passphrase to the key data for added security.
 func saltKey(key fernet.Key, data []byte, hashedPassphrase []byte) ([]byte, []byte, error) {
 	encryptedRandHead, err := getRandEncrypt(maxRandomHashDataSize)
 	if err != nil {
