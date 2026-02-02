@@ -21,7 +21,7 @@ type Key struct {
 // GetKeyHostUser generates a new encryption key or reads an existing one from the specified path.
 // If useHost or useUser is true, the host/user hash will be included in the key to bind it to the host/user.
 func GetKeyHostUser(keyPath string, useHost, useUser bool) (*Key, error) {
-	hostUser, err := concatHostUser(useHost, useUser)
+	hostUser, err := getHostUser(useHost, useUser)
 	if err != nil {
 		return nil, err
 	}
