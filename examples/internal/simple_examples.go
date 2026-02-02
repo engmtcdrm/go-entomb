@@ -25,7 +25,7 @@ func NewKeyEncDecExample() {
 
 	fmt.Print("Creating new key...\n\n")
 
-	t, err := entomb.NewTomb(keyPath, true, false)
+	key, err := entomb.GetKeyHostUser(keyPath, true, false)
 	if err != nil {
 		panic(err)
 	}
@@ -35,7 +35,7 @@ func NewKeyEncDecExample() {
 	fmt.Printf("Message to encrypt: %s\n\n", pp.Green(msg))
 
 	// Encrypt a string
-	encrypted, err := t.Encrypt([]byte(msg))
+	encrypted, err := entomb.Encrypt(key, []byte(msg))
 	if err != nil {
 		panic(err)
 	}
@@ -43,7 +43,7 @@ func NewKeyEncDecExample() {
 	fmt.Printf("Encrypted message: %s\n\n", pp.Green(string(encrypted)))
 
 	// Decrypt the string
-	decrypted, err := t.Decrypt(encrypted)
+	decrypted, err := entomb.Decrypt(key, encrypted)
 	if err != nil {
 		panic(err)
 	}
@@ -67,15 +67,19 @@ func ExistingKeyEncDecExample() {
 	fmt.Println("Creating new key...")
 
 	// Create a new tomb to generate and save the key
-	t, err := entomb.NewTomb(keyPath, true, false)
+	key, err := entomb.GetKeyHostUser(keyPath, true, false)
 	if err != nil {
 		panic(err)
+	}
+
+	if _, err := os.Stat(keyPath); err == nil {
+		fmt.Println("Key file created successfully.")
 	}
 
 	fmt.Print("Now using the new key from previous step...\n\n")
 
 	// Now create a new tomb instance using the existing key
-	t, err = entomb.NewTomb(keyPath, true, false)
+	key, err = entomb.GetKeyHostUser(keyPath, true, false)
 	if err != nil {
 		panic(err)
 	}
@@ -85,7 +89,7 @@ func ExistingKeyEncDecExample() {
 	fmt.Printf("Message to encrypt: %s\n\n", pp.Green(msg))
 
 	// Encrypt a string
-	encrypted, err := t.Encrypt([]byte(msg))
+	encrypted, err := entomb.Encrypt(key, []byte(msg))
 	if err != nil {
 		panic(err)
 	}
@@ -93,7 +97,7 @@ func ExistingKeyEncDecExample() {
 	fmt.Printf("Encrypted message: %s\n\n", pp.Green(string(encrypted)))
 
 	// Decrypt the string
-	decrypted, err := t.Decrypt(encrypted)
+	decrypted, err := entomb.Decrypt(key, encrypted)
 	if err != nil {
 		panic(err)
 	}
