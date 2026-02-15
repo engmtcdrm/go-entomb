@@ -78,7 +78,6 @@ func readKey(keyPath string, hashedPassphrase []byte) (*Key, error) {
 	}
 
 	var key fernet.Key
-
 	if err := key.Generate(); err != nil {
 		return nil, err
 	}
