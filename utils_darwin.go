@@ -1,5 +1,4 @@
 //go:build darwin
-// +build darwin
 
 package entomb
 
@@ -7,7 +6,6 @@ import (
 	"bytes"
 	"net"
 	"os/exec"
-	"strings"
 )
 
 func machineId() ([]byte, error) {
@@ -36,15 +34,4 @@ func machineId() ([]byte, error) {
 	}
 
 	return nil, nil // No UUID or MAC found
-}
-
-// isValidPath checks for characters that are not allowed in Darwin file paths.
-func isValidPath(path string) bool {
-	return !isInvalidPath(path)
-}
-
-// isInvalidPath checks for characters that are not allowed in Darwin file paths.
-func isInvalidPath(path string) bool {
-	// Check for null byte
-	return strings.Contains(path, "\x00")
 }
