@@ -1,6 +1,6 @@
 module github.com/engmtcdrm/go-entomb/examples
 
-go 1.25
+go 1.25.6
 
 replace github.com/engmtcdrm/go-entomb => ../
 
@@ -17,6 +17,6 @@ require (
 	github.com/engmtcdrm/go-pardon v0.0.0-20251015210019-f3dbc0f5b83a // indirect
 	github.com/fernet/fernet-go v0.0.0-20240119011108-303da6aec611 // indirect
 	github.com/mattn/go-runewidth v0.0.19 // indirect
-	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/sys v0.40.0 // indirect
 	golang.org/x/term v0.38.0 // indirect
 )
