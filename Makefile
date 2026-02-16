@@ -2,13 +2,13 @@
 
 build:
 	@echo "Size before build:"; \
-	ls -la examples/simple |grep simple; \
-	ls -lh examples/simple |grep simple; \
+	ls -la examples |grep examples; \
+	ls -lh examples |grep examples; \
 	echo "\nSize after build:"; \
-	cd examples/simple; \
-	go build --ldflags "-s -w" -o simple; \
-	ls -la |grep simple; \
-	ls -lh |grep simple; \
+	cd examples; \
+	go build --ldflags "-s -w" -o examples; \
+	ls -la |grep examples; \
+	ls -lh |grep examples; \
 	cd ..
 
 run:
