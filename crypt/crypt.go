@@ -2,6 +2,7 @@ package crypt
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,11 +32,11 @@ type Crypt struct {
 
 func NewCrypt(keyPath string, tombsPath string, useHost, useUser bool) (*Crypt, error) {
 	if keyPath == "" {
-		return nil, errors.New("key path is empty")
+		return nil, errors.New(ErrorEmptyKeyPath)
 	}
 
 	if tombsPath == "" {
-		return nil, errors.New("tombs path is empty")
+		return nil, errors.New(ErrorEmptyTombsPath)
 	}
 
 	key, err := entomb.GetKeyHostUser(keyPath, useHost, useUser)
@@ -69,7 +70,7 @@ func (c *Crypt) Desecrate(name string) error {
 	c.tombsMu.RUnlock()
 
 	if !exists {
-		return errors.New("tomb not found")
+		return errors.New(ErrorTombNotFound)
 	}
 
 	err := os.Remove(tomb.Path())
@@ -118,21 +119,27 @@ func (c *Crypt) Epitaph() []*Tomb {
 // an error if the tomb name is invalid, if there is an issue encrypting the message, or if
 // there is an issue saving the tomb file.
 func (c *Crypt) Entomb(name string, msg []byte) error {
+	if name == "" {
+		return errors.New(ErrorEmptyTombName)
+	}
+
+	if !c.validateName(name) {
+		return errors.New(ErrorInvalidTombName)
+	}
+
 	fullPath := filepath.Join(c.tombsPath, name+c.tombFileExt)
 	absFullPath, err := cleanAbsPath(fullPath)
 	if err != nil {
-		return err
+		return fmt.Errorf(ErrorMessageFormat, ErrorInvalidTombPath, err)
 	}
 
 	if isInvalidPath(absFullPath) {
-		return errors.New("invalid tomb name")
+		return errors.New(ErrorInvalidTombPath)
 	}
-
-	// TODO: Run validateTombNameFn if set, ignore for now since it is not currently used
 
 	encMsg, err := entomb.Encrypt(c.key, msg)
 	if err != nil {
-		return err
+		return fmt.Errorf(ErrorMessageFormat, ErrorInvalidTombPath, err)
 	}
 
 	c.tombMu.Lock()
@@ -140,12 +147,12 @@ func (c *Crypt) Entomb(name string, msg []byte) error {
 
 	err = os.MkdirAll(filepath.Dir(absFullPath), DirFilePerms)
 	if err != nil {
-		return err
+		return fmt.Errorf(ErrorMessageFormat, ErrorMakingTombPathFailed, err)
 	}
 
 	err = os.WriteFile(absFullPath, encMsg, FilePerms)
 	if err != nil {
-		return err
+		return fmt.Errorf(ErrorMessageFormat, ErrorWritingTombFailed, err)
 	}
 
 	c.tombsMu.Lock()
@@ -157,26 +164,85 @@ func (c *Crypt) Entomb(name string, msg []byte) error {
 	return nil
 }
 
+func (c *Crypt) EntombFromFile(name string, filePath string, cleanup bool) error {
+	if name == "" {
+		return errors.New(ErrorEmptyTombName)
+	}
+
+	if !c.validateName(name) {
+		return errors.New(ErrorInvalidTombName)
+	}
+
+	if filePath == "" {
+		return errors.New(ErrorEmptyTombPath)
+	}
+
+	rawFile, err := cleanAbsPath(filePath)
+	if err != nil {
+		return err
+	}
+
+	msgBytes, err := os.ReadFile(rawFile)
+	if err != nil {
+		return fmt.Errorf(ErrorMessageFormat, ErrorReadingTombFailed, err)
+	}
+
+	msgBytes = trimSpaceBytes(&msgBytes)
+	encMsg, err := entomb.Encrypt(c.key, msgBytes)
+	clearMsg(&msgBytes)
+	if err != nil {
+		return err
+	}
+
+	tomb := c.newTomb(name)
+	newTombPath := filepath.Dir(tomb.Path())
+
+	err = os.MkdirAll(newTombPath, DirFilePerms)
+	if err != nil {
+		return fmt.Errorf(ErrorMessageFormat, ErrorMakingTombPathFailed, err)
+	}
+
+	if err = os.WriteFile(tomb.Path(), encMsg, FilePerms); err != nil {
+		return fmt.Errorf(ErrorMessageFormat, ErrorWritingTombFailed, err)
+	}
+
+	if cleanup {
+		if err = os.Remove(rawFile); err != nil {
+			return fmt.Errorf(ErrorMessageFormat, ErrorRemovingFileFailed, err)
+		}
+	}
+
+	return nil
+}
+
 // Exhume retrieves and decrypts the message from the tomb with the given name. It returns an
 // error if the tomb does not exist, if there is an issue reading the tomb file, or if there
 // is an issue decrypting the message.
 func (c *Crypt) Exhume(name string) ([]byte, error) {
+	if name == "" {
+		return nil, errors.New(ErrorEmptyTombName)
+	}
+
+	if !c.validateName(name) {
+		return nil, errors.New(ErrorInvalidTombName)
+	}
+
 	c.tombsMu.RLock()
 	tomb, exists := c.tombs[name]
 	c.tombsMu.RUnlock()
 
 	if !exists {
-		return nil, errors.New("tomb not found")
+		return nil, errors.New(ErrorTombNotFound)
 	}
 
 	encMsg, err := os.ReadFile(tomb.Path())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(ErrorMessageFormat, ErrorReadingTombFailed, err)
 	}
 
 	msg, err := entomb.Decrypt(c.key, encMsg)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(ErrorMessageFormat, ErrorDecryptingTombFailed, err)
 	}
 
 	return msg, nil
@@ -186,12 +252,12 @@ func (c *Crypt) Exhume(name string) ([]byte, error) {
 // and sets the absolute path to the struct.
 func (c *Crypt) initializeTombsPath(tombsPath string) error {
 	if isInvalidPath(tombsPath) {
-		return errors.New("invalid tombs path")
+		return errors.New(ErrorInvalidTombsPath)
 	}
 
 	absPath, err := cleanAbsPath(tombsPath)
 	if err != nil {
-		return err
+		return fmt.Errorf(ErrorMessageFormat, ErrorInvalidTombsPath, err)
 	}
 
 	c.tombsMu.Lock()
@@ -202,7 +268,7 @@ func (c *Crypt) initializeTombsPath(tombsPath string) error {
 		if os.IsNotExist(err) {
 			err = os.MkdirAll(absPath, DirFilePerms)
 			if err != nil {
-				return err
+				return fmt.Errorf(ErrorMessageFormat, ErrorInitializingTombsPath, err)
 			}
 
 			c.tombsPath = absPath
@@ -210,11 +276,11 @@ func (c *Crypt) initializeTombsPath(tombsPath string) error {
 			return nil
 		}
 
-		return err
+		return fmt.Errorf(ErrorMessageFormat, ErrorInitializingTombsPath, err)
 	}
 
 	if !statPath.IsDir() {
-		return errors.New("tombs path exists but is not a directory")
+		return errors.New(ErrorTombsPathIsDirectory)
 	}
 
 	c.tombsPath = absPath
@@ -248,7 +314,7 @@ func (c *Crypt) getTombs() error {
 		return nil
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf(ErrorMessageFormat, ErrorGettingTombsPathFilesFailed, err)
 	}
 
 	c.tombsMu.Lock()
@@ -258,4 +324,23 @@ func (c *Crypt) getTombs() error {
 	c.tombsLastModTime = time.Now()
 
 	return nil
+}
+
+func (c *Crypt) newTomb(name string) *Tomb {
+	return NewTomb(
+		name,
+		filepath.Join(c.tombsPath, name+c.tombFileExt),
+	)
+}
+
+func (c *Crypt) validateName(name string) bool {
+	if isInvalidPath(name) {
+		return false
+	}
+
+	if c.validateTombNameFn != nil {
+		return c.validateTombNameFn(name)
+	}
+
+	return true
 }
