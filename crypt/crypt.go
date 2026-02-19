@@ -27,7 +27,7 @@ type Crypt struct {
 
 	tombMu             sync.RWMutex
 	tombFileExt        string
-	validateTombNameFn func(name string) bool
+	validateTombNameFn func(name string) error
 }
 
 func NewCrypt(keyPath string, tombsPath string, useHost, useUser bool) (*Crypt, error) {
@@ -48,12 +48,39 @@ func NewCrypt(keyPath string, tombsPath string, useHost, useUser bool) (*Crypt, 
 		key:                key,
 		tombs:              make(map[string]*Tomb, 0),
 		tombFileExt:        ".tomb",
-		validateTombNameFn: nil,
+		validateTombNameFn: DefaultValidateTombName,
 	}
 
-	if err := c.initializeTombsPath(tombsPath); err != nil {
+	if isInvalidPath(c.tombsPath) {
+		return nil, errors.New(ErrorInvalidTombsPath)
+	}
+
+	c.tombsPath, err = cleanAbsPath(tombsPath)
+	if err != nil {
+		return nil, fmt.Errorf(ErrorMessageFormat, ErrorInvalidTombsPath, err)
+	}
+
+	if err := c.initializeTombsPath(); err != nil {
 		return nil, err
 	}
+
+	if err := c.getTombs(); err != nil {
+		return nil, err
+	}
+
+	return c, nil
+}
+
+// ValidateTombNameFunc sets a custom function to validate tomb names.
+func (c *Crypt) ValidateTombNameFunc(f func(name string) error) *Crypt {
+	c.validateTombNameFn = f
+	return c
+}
+
+// TombFileExt sets the file extension for tomb files. It returns an error if there is an
+// issue retrieving the tombs after changing the extension.
+func (c *Crypt) TombFileExt(ext string) (*Crypt, error) {
+	c.tombFileExt = ext
 
 	if err := c.getTombs(); err != nil {
 		return nil, err
@@ -102,19 +129,6 @@ func (c *Crypt) DesecrateAll() error {
 	return nil
 }
 
-// Epitaph returns a slice of all tombs. It returns an empty slice if there are no tombs.
-func (c *Crypt) Epitaph() []*Tomb {
-	c.tombsMu.RLock()
-	defer c.tombsMu.RUnlock()
-
-	var tombs []*Tomb
-	for _, tomb := range c.tombs {
-		tombs = append(tombs, tomb)
-	}
-
-	return tombs
-}
-
 // Entomb encrypts the given message and saves it as a tomb with the given name. It returns
 // an error if the tomb name is invalid, if there is an issue encrypting the message, or if
 // there is an issue saving the tomb file.
@@ -123,8 +137,8 @@ func (c *Crypt) Entomb(name string, msg []byte) error {
 		return errors.New(ErrorEmptyTombName)
 	}
 
-	if !c.validateName(name) {
-		return errors.New(ErrorInvalidTombName)
+	if err := c.validateName(name); err != nil {
+		return err
 	}
 
 	fullPath := filepath.Join(c.tombsPath, name+c.tombFileExt)
@@ -158,19 +172,24 @@ func (c *Crypt) Entomb(name string, msg []byte) error {
 	c.tombsMu.Lock()
 	defer c.tombsMu.Unlock()
 
-	c.tombs[name] = NewTomb(name, absFullPath)
+	c.tombs[name] = c.newTomb(name)
 	c.tombsLastModTime = time.Now()
 
 	return nil
 }
 
+// EntombFromFile reads the content of the file at filePath, encrypts it, and saves it as a
+// tomb with the given name. If cleanup is true, it deletes the original file after
+// successfully creating the tomb. It returns an error if the tomb name is invalid, if
+// there is an issue reading the file, encrypting the message, saving the tomb file, or
+// deleting the original file.
 func (c *Crypt) EntombFromFile(name string, filePath string, cleanup bool) error {
 	if name == "" {
 		return errors.New(ErrorEmptyTombName)
 	}
 
-	if !c.validateName(name) {
-		return errors.New(ErrorInvalidTombName)
+	if err := c.validateName(name); err != nil {
+		return err
 	}
 
 	if filePath == "" {
@@ -215,6 +234,19 @@ func (c *Crypt) EntombFromFile(name string, filePath string, cleanup bool) error
 	return nil
 }
 
+// Epitaph returns a slice of all tombs. It returns an empty slice if there are no tombs.
+func (c *Crypt) Epitaph() []*Tomb {
+	c.tombsMu.RLock()
+	defer c.tombsMu.RUnlock()
+
+	var tombs []*Tomb
+	for _, tomb := range c.tombs {
+		tombs = append(tombs, tomb)
+	}
+
+	return tombs
+}
+
 // Exhume retrieves and decrypts the message from the tomb with the given name. It returns an
 // error if the tomb does not exist, if there is an issue reading the tomb file, or if there
 // is an issue decrypting the message.
@@ -223,8 +255,8 @@ func (c *Crypt) Exhume(name string) ([]byte, error) {
 		return nil, errors.New(ErrorEmptyTombName)
 	}
 
-	if !c.validateName(name) {
-		return nil, errors.New(ErrorInvalidTombName)
+	if err := c.validateName(name); err != nil {
+		return nil, err
 	}
 
 	c.tombsMu.RLock()
@@ -250,28 +282,17 @@ func (c *Crypt) Exhume(name string) ([]byte, error) {
 
 // initializeTombsPath validates the tombs path, creates it if it doesn't exist,
 // and sets the absolute path to the struct.
-func (c *Crypt) initializeTombsPath(tombsPath string) error {
-	if isInvalidPath(tombsPath) {
-		return errors.New(ErrorInvalidTombsPath)
-	}
-
-	absPath, err := cleanAbsPath(tombsPath)
-	if err != nil {
-		return fmt.Errorf(ErrorMessageFormat, ErrorInvalidTombsPath, err)
-	}
-
+func (c *Crypt) initializeTombsPath() error {
 	c.tombsMu.Lock()
 	defer c.tombsMu.Unlock()
 
-	statPath, err := os.Stat(absPath)
+	statPath, err := os.Stat(c.tombsPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			err = os.MkdirAll(absPath, DirFilePerms)
+			err = os.MkdirAll(c.tombsPath, DirFilePerms)
 			if err != nil {
 				return fmt.Errorf(ErrorMessageFormat, ErrorInitializingTombsPath, err)
 			}
-
-			c.tombsPath = absPath
 
 			return nil
 		}
@@ -283,11 +304,11 @@ func (c *Crypt) initializeTombsPath(tombsPath string) error {
 		return errors.New(ErrorTombsPathIsDirectory)
 	}
 
-	c.tombsPath = absPath
-
 	return nil
 }
 
+// getTombs scans the tombs path for tomb files and updates the tombs map. It returns an error
+// if there is an issue accessing the tombs path or reading the tomb files.
 func (c *Crypt) getTombs() error {
 	tombs := make(map[string]*Tomb, 0)
 
@@ -305,6 +326,10 @@ func (c *Crypt) getTombs() error {
 			name := strings.TrimSuffix(relPath, c.tombFileExt)
 			absPath, err := cleanAbsPath(path)
 			if err != nil {
+				return err
+			}
+
+			if err := c.validateName(name); err != nil {
 				return err
 			}
 
@@ -326,6 +351,7 @@ func (c *Crypt) getTombs() error {
 	return nil
 }
 
+// newTomb creates a new Tomb instance with the given name and path.
 func (c *Crypt) newTomb(name string) *Tomb {
 	return NewTomb(
 		name,
@@ -333,14 +359,16 @@ func (c *Crypt) newTomb(name string) *Tomb {
 	)
 }
 
-func (c *Crypt) validateName(name string) bool {
+// validateName checks if the tomb name is valid using both path validation and
+// the custom validation function if it is set.
+func (c *Crypt) validateName(name string) error {
 	if isInvalidPath(name) {
-		return false
+		return errors.New(ErrorInvalidTombName)
 	}
 
-	if c.validateTombNameFn != nil {
-		return c.validateTombNameFn(name)
+	if err := c.validateTombNameFn(name); err != nil {
+		return err
 	}
 
-	return true
+	return nil
 }
