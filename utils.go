@@ -101,7 +101,7 @@ func getHostUser(useHost bool, useUser bool) ([]byte, error) {
 
 // getHost retrieves the machine ID of the host system.
 func getHost() (string, error) {
-	host, err := machineId()
+	host, err := machineID()
 	if err != nil {
 		return "", err
 	}

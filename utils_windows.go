@@ -7,7 +7,7 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-func machineId() ([]byte, error) {
+func machineID() ([]byte, error) {
 	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Cryptography`, registry.QUERY_VALUE)
 	if err != nil {
 		return nil, err
@@ -15,9 +15,9 @@ func machineId() ([]byte, error) {
 	defer k.Close()
 
 	mid, _, err := k.GetStringValue("MachineGuid")
-	if err != nil {
-		return nil, err
+	if err == nil {
+		return []byte(mid), nil
 	}
 
-	return []byte(mid), nil
+	return []byte("localhost"), nil
 }
