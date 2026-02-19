@@ -1,7 +1,7 @@
 package crypt
 
 import (
-	"errors"
+	"fmt"
 	"regexp"
 )
 
@@ -9,12 +9,14 @@ const (
 	regexValidName = `^[\w\/\\\-]+$`
 )
 
-func DefaultValidateSecretName(s string) error {
+// DefaultValidateTombName checks if the tomb name contains only valid characters. Valid
+// characters are alphanumeric, hyphens, underscores, and slashes.
+func DefaultValidateTombName(s string) error {
 	var re = regexp.MustCompile(regexValidName)
 
 	if re.MatchString(s) {
 		return nil
 	}
 
-	return errors.New("invalid secret name: Secret name can only contain alphanumeric, hyphens, underscores, and slashes")
+	return fmt.Errorf("%s: %s", ErrorInvalidTombName, "name can only contain alphanumeric, hyphens, underscores, and slashes")
 }
