@@ -72,9 +72,14 @@ func NewCrypt(keyPath string, tombsPath string, useHost, useUser bool) (*Crypt, 
 }
 
 // ValidateTombNameFunc sets a custom function to validate tomb names.
-func (c *Crypt) ValidateTombNameFunc(f func(name string) error) *Crypt {
+func (c *Crypt) ValidateTombNameFunc(f func(name string) error) (*Crypt, error) {
 	c.validateTombNameFn = f
-	return c
+
+	if err := c.getTombs(); err != nil {
+		return nil, err
+	}
+
+	return c, nil
 }
 
 // TombFileExt sets the file extension for tomb files. It returns an error if there is an
