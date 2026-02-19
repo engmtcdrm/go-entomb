@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/engmtcdrm/go-entomb/crypt"
 )
@@ -9,7 +10,8 @@ import (
 func CryptExample() {
 	crypt2, err := crypt.NewCrypt("___keyPath", "___tombsPath", true, true)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	tombs := crypt2.Epitaph()
@@ -22,22 +24,31 @@ func CryptExample() {
 
 	err = crypt2.Entomb("tomb1", []byte("This is a secret message"))
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	err = crypt2.Entomb("subdir/tomb1", []byte("This is a secret message"))
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	err = crypt2.Entomb("subdir2/subsubdir/tomb1", []byte("This is a secret message"))
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	err = crypt2.Entomb("tomb2.", []byte("This is a secret message"))
+	if err != nil {
+		fmt.Println(err)
 	}
 
 	tomb, err := crypt2.Exhume("tomb1")
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	fmt.Println("Tomb value:", string(tomb))
