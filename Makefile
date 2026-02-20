@@ -1,4 +1,4 @@
-.PHONY: build run test testv
+.PHONY: build run test testv testcover
 
 build:
 	@echo "Size before build:"; \
