@@ -3,5 +3,15 @@
 {
 	"name": "Go",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/go:2-1.25-trixie"
+	"image": "mcr.microsoft.com/devcontainers/go:2-1.25-trixie",
+	"customizations": {
+        "vscode": {
+            "extensions": [
+                "golang.go",
+                "ms-vscode.makefile-tools",
+				"SonarSource.sonarlint-vscode",
+				"GitHub.copilot-chat"
+            ]
+        }
+    }
 }
