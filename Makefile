@@ -1,4 +1,4 @@
-.PHONY: build run test testv testcover
+.PHONY: build run test testv testcover testcoverall
 
 build:
 	@echo "Size before build:"; \
@@ -24,3 +24,6 @@ testv:
 
 testcover:
 	@go test -coverprofile=coverage.out && go tool cover -html=coverage.out -o coverage.html
+
+testcoverall:
+	@go test ./... -coverprofile=coverage.out && go tool cover -html=coverage.out -o coverage.html
