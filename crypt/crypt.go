@@ -177,7 +177,11 @@ func (c *Crypt) Entomb(name string, msg []byte) error {
 	c.tombsMu.Lock()
 	defer c.tombsMu.Unlock()
 
-	c.tombs[name] = c.newTomb(name)
+	c.tombs[name], err = c.newTomb(name)
+	if err != nil {
+		return err
+	}
+
 	c.tombsLastModTime = time.Now()
 
 	return nil
@@ -218,7 +222,11 @@ func (c *Crypt) EntombFromFile(name string, filePath string, cleanup bool) error
 		return err
 	}
 
-	tomb := c.newTomb(name)
+	tomb, err := c.newTomb(name)
+	if err != nil {
+		return err
+	}
+
 	newTombPath := filepath.Dir(tomb.Path())
 
 	err = os.MkdirAll(newTombPath, DirFilePerms)
@@ -338,7 +346,10 @@ func (c *Crypt) getTombs() error {
 				return err
 			}
 
-			tombs[name] = NewTomb(name, absPath)
+			tombs[name], err = NewTomb(name, absPath)
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil
@@ -357,7 +368,7 @@ func (c *Crypt) getTombs() error {
 }
 
 // newTomb creates a new Tomb instance with the given name and path.
-func (c *Crypt) newTomb(name string) *Tomb {
+func (c *Crypt) newTomb(name string) (*Tomb, error) {
 	return NewTomb(
 		name,
 		filepath.Join(c.tombsPath, name+c.tombFileExt),
