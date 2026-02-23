@@ -39,7 +39,12 @@ func NewCrypt(keyPath string, tombsPath string, useHost, useUser bool) (*Crypt, 
 		return nil, errors.New(ErrorEmptyTombsPath)
 	}
 
-	key, err := entomb.GetKeyHostUser(keyPath, useHost, useUser)
+	cleanKeyPath, err := cleanAndValidatePath(keyPath)
+	if err != nil {
+		return nil, fmt.Errorf(ErrorMessageFormat, ErrorInvalidKeyPath, err)
+	}
+
+	key, err := entomb.GetKeyHostUser(cleanKeyPath, useHost, useUser)
 	if err != nil {
 		return nil, err
 	}
@@ -51,11 +56,7 @@ func NewCrypt(keyPath string, tombsPath string, useHost, useUser bool) (*Crypt, 
 		validateTombNameFn: DefaultValidateTombName,
 	}
 
-	if isInvalidPath(c.tombsPath) {
-		return nil, errors.New(ErrorInvalidTombsPath)
-	}
-
-	c.tombsPath, err = cleanAbsPath(tombsPath)
+	c.tombsPath, err = cleanAndValidatePath(tombsPath)
 	if err != nil {
 		return nil, fmt.Errorf(ErrorMessageFormat, ErrorInvalidTombsPath, err)
 	}
@@ -147,13 +148,9 @@ func (c *Crypt) Entomb(name string, msg []byte) error {
 	}
 
 	fullPath := filepath.Join(c.tombsPath, name+c.tombFileExt)
-	absFullPath, err := cleanAbsPath(fullPath)
+	absFullPath, err := cleanAndValidatePath(fullPath)
 	if err != nil {
 		return fmt.Errorf(ErrorMessageFormat, ErrorInvalidTombPath, err)
-	}
-
-	if isInvalidPath(absFullPath) {
-		return errors.New(ErrorInvalidTombPath)
 	}
 
 	encMsg, err := entomb.Encrypt(c.key, msg)
@@ -205,7 +202,7 @@ func (c *Crypt) EntombFromFile(name string, filePath string, cleanup bool) error
 		return errors.New(ErrorEmptyTombPath)
 	}
 
-	rawFile, err := cleanAbsPath(filePath)
+	rawFile, err := cleanAndValidatePath(filePath)
 	if err != nil {
 		return err
 	}
@@ -337,7 +334,7 @@ func (c *Crypt) getTombs() error {
 			}
 
 			name := strings.TrimSuffix(relPath, c.tombFileExt)
-			absPath, err := cleanAbsPath(path)
+			absPath, err := cleanAndValidatePath(path)
 			if err != nil {
 				return err
 			}
