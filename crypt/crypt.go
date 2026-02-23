@@ -1,7 +1,6 @@
 package crypt
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -32,16 +31,16 @@ type Crypt struct {
 
 func NewCrypt(keyPath string, tombsPath string, useHost, useUser bool) (*Crypt, error) {
 	if keyPath == "" {
-		return nil, errors.New(ErrorEmptyKeyPath)
+		return nil, ErrEmptyKeyPath
 	}
 
 	if tombsPath == "" {
-		return nil, errors.New(ErrorEmptyTombsPath)
+		return nil, ErrEmptyTombsPath
 	}
 
 	cleanKeyPath, err := cleanAndValidatePath(keyPath)
 	if err != nil {
-		return nil, fmt.Errorf(errMsgFormat, errors.New(ErrorInvalidKeyPath), err)
+		return nil, fmt.Errorf("%w: %w", ErrInvalidKeyPath, err)
 	}
 
 	key, err := entomb.GetKeyHostUser(cleanKeyPath, useHost, useUser)
@@ -58,7 +57,7 @@ func NewCrypt(keyPath string, tombsPath string, useHost, useUser bool) (*Crypt, 
 
 	c.tombsPath, err = cleanAndValidatePath(tombsPath)
 	if err != nil {
-		return nil, fmt.Errorf(errMsgFormat, ErrorInvalidTombsPath, err)
+		return nil, fmt.Errorf("%w: %w", ErrInvalidTombsPath, err)
 	}
 
 	if err := c.initializeTombsPath(); err != nil {
@@ -103,7 +102,7 @@ func (c *Crypt) Desecrate(name string) error {
 	c.tombsMu.RUnlock()
 
 	if !exists {
-		return errors.New(ErrorTombNotFound)
+		return ErrTombNotFound
 	}
 
 	err := os.Remove(tomb.Path())
@@ -140,7 +139,7 @@ func (c *Crypt) DesecrateAll() error {
 // there is an issue saving the tomb file.
 func (c *Crypt) Entomb(name string, msg []byte) error {
 	if name == "" {
-		return errors.New(ErrorEmptyTombName)
+		return ErrEmptyTombName
 	}
 
 	if err := c.validateName(name); err != nil {
@@ -150,12 +149,12 @@ func (c *Crypt) Entomb(name string, msg []byte) error {
 	fullPath := filepath.Join(c.tombsPath, name+c.tombFileExt)
 	absFullPath, err := cleanAndValidatePath(fullPath)
 	if err != nil {
-		return fmt.Errorf(errMsgFormat, ErrorInvalidTombPath, err)
+		return fmt.Errorf("%w: %w", ErrInvalidTombPath, err)
 	}
 
 	encMsg, err := entomb.Encrypt(c.key, msg)
 	if err != nil {
-		return fmt.Errorf(errMsgFormat, ErrorInvalidTombPath, err)
+		return fmt.Errorf("%w: %w", ErrEncryptTomb, err)
 	}
 
 	c.tombMu.Lock()
@@ -163,12 +162,12 @@ func (c *Crypt) Entomb(name string, msg []byte) error {
 
 	err = os.MkdirAll(filepath.Dir(absFullPath), DirFilePerms)
 	if err != nil {
-		return fmt.Errorf(errMsgFormat, ErrorMakingTombPathFailed, err)
+		return fmt.Errorf("%w: %w", ErrMakeTombPath, err)
 	}
 
 	err = os.WriteFile(absFullPath, encMsg, FilePerms)
 	if err != nil {
-		return fmt.Errorf(errMsgFormat, ErrorWritingTombFailed, err)
+		return fmt.Errorf("%w: %w", ErrWriteTomb, err)
 	}
 
 	c.tombsMu.Lock()
@@ -191,7 +190,7 @@ func (c *Crypt) Entomb(name string, msg []byte) error {
 // deleting the original file.
 func (c *Crypt) EntombFromFile(name string, filePath string, cleanup bool) error {
 	if name == "" {
-		return errors.New(ErrorEmptyTombName)
+		return ErrEmptyTombName
 	}
 
 	if err := c.validateName(name); err != nil {
@@ -199,7 +198,7 @@ func (c *Crypt) EntombFromFile(name string, filePath string, cleanup bool) error
 	}
 
 	if filePath == "" {
-		return errors.New(ErrorEmptyTombPath)
+		return ErrEmptyTombPath
 	}
 
 	rawFile, err := cleanAndValidatePath(filePath)
@@ -209,7 +208,7 @@ func (c *Crypt) EntombFromFile(name string, filePath string, cleanup bool) error
 
 	msgBytes, err := os.ReadFile(rawFile)
 	if err != nil {
-		return fmt.Errorf(errMsgFormat, ErrorReadingTombFailed, err)
+		return fmt.Errorf("%w: %w", ErrReadTomb, err)
 	}
 
 	msgBytes = trimSpaceBytes(&msgBytes)
@@ -228,16 +227,16 @@ func (c *Crypt) EntombFromFile(name string, filePath string, cleanup bool) error
 
 	err = os.MkdirAll(newTombPath, DirFilePerms)
 	if err != nil {
-		return fmt.Errorf(errMsgFormat, ErrorMakingTombPathFailed, err)
+		return fmt.Errorf("%w: %w", ErrMakeTombPath, err)
 	}
 
 	if err = os.WriteFile(tomb.Path(), encMsg, FilePerms); err != nil {
-		return fmt.Errorf(errMsgFormat, ErrorWritingTombFailed, err)
+		return fmt.Errorf("%w: %w", ErrWriteTomb, err)
 	}
 
 	if cleanup {
 		if err = os.Remove(rawFile); err != nil {
-			return fmt.Errorf(errMsgFormat, ErrorRemovingFileFailed, err)
+			return fmt.Errorf("%w: %w", ErrRemoveFile, err)
 		}
 	}
 
@@ -262,7 +261,7 @@ func (c *Crypt) Epitaph() []*Tomb {
 // is an issue decrypting the message.
 func (c *Crypt) Exhume(name string) ([]byte, error) {
 	if name == "" {
-		return nil, errors.New(ErrorEmptyTombName)
+		return nil, ErrEmptyTombName
 	}
 
 	if err := c.validateName(name); err != nil {
@@ -274,17 +273,17 @@ func (c *Crypt) Exhume(name string) ([]byte, error) {
 	c.tombsMu.RUnlock()
 
 	if !exists {
-		return nil, errors.New(ErrorTombNotFound)
+		return nil, ErrTombNotFound
 	}
 
 	encMsg, err := os.ReadFile(tomb.Path())
 	if err != nil {
-		return nil, fmt.Errorf(errMsgFormat, ErrorReadingTombFailed, err)
+		return nil, fmt.Errorf("%w: %w", ErrReadTomb, err)
 	}
 
 	msg, err := entomb.Decrypt(c.key, encMsg)
 	if err != nil {
-		return nil, fmt.Errorf(errMsgFormat, ErrorDecryptingTombFailed, err)
+		return nil, fmt.Errorf("%w: %w", ErrDecryptTomb, err)
 	}
 
 	return msg, nil
@@ -301,17 +300,17 @@ func (c *Crypt) initializeTombsPath() error {
 		if os.IsNotExist(err) {
 			err = os.MkdirAll(c.tombsPath, DirFilePerms)
 			if err != nil {
-				return fmt.Errorf(errMsgFormat, errors.New(ErrorInitializingTombsPath), err)
+				return fmt.Errorf("%w: %w", ErrInitTombsPath, err)
 			}
 
 			return nil
 		}
 
-		return fmt.Errorf(errMsgFormat, errors.New(ErrorInitializingTombsPath), err)
+		return fmt.Errorf("%w: %w", ErrInitTombsPath, err)
 	}
 
 	if !statPath.IsDir() {
-		return errors.New(ErrorTombsPathIsDirectory)
+		return ErrTombsPathNotDirectory
 	}
 
 	return nil
@@ -352,7 +351,7 @@ func (c *Crypt) getTombs() error {
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf(errMsgFormat, ErrorGettingTombsPathFilesFailed, err)
+		return fmt.Errorf("%w: %w", ErrGetTombs, err)
 	}
 
 	c.tombsMu.Lock()
@@ -376,7 +375,7 @@ func (c *Crypt) newTomb(name string) (*Tomb, error) {
 // the custom validation function if it is set.
 func (c *Crypt) validateName(name string) error {
 	if isInvalidPath(name) {
-		return errors.New(ErrorInvalidTombName)
+		return ErrInvalidTombName
 	}
 
 	if err := c.validateTombNameFn(name); err != nil {

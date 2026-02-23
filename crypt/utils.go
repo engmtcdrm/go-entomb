@@ -1,7 +1,6 @@
 package crypt
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,7 +27,7 @@ func cleanAndValidatePath(path string) (string, error) {
 	}
 
 	if isInvalidPath(absPath) {
-		return "", errors.New(ErrorInvalidPath)
+		return "", ErrInvalidPath
 	}
 
 	return absPath, nil

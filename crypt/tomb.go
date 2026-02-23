@@ -1,7 +1,5 @@
 package crypt
 
-import "errors"
-
 // Tomb represents an encrypted file with its name and path.
 type Tomb struct {
 	name string
@@ -11,11 +9,11 @@ type Tomb struct {
 // NewTomb creates a new Tomb with the given name and path.
 func NewTomb(name, path string) (*Tomb, error) {
 	if name == "" {
-		return nil, errors.New(ErrorEmptyTombName)
+		return nil, ErrEmptyTombName
 	}
 
 	if path == "" {
-		return nil, errors.New(ErrorEmptyTombPath)
+		return nil, ErrEmptyTombPath
 	}
 
 	return &Tomb{

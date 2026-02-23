@@ -18,5 +18,5 @@ func DefaultValidateTombName(s string) error {
 		return nil
 	}
 
-	return fmt.Errorf("%s: %s", ErrorInvalidTombName, "name can only contain alphanumeric, hyphens, underscores, and slashes")
+	return fmt.Errorf("%w: %s", ErrInvalidTombName, "name can only contain alphanumeric, hyphens, underscores, and slashes")
 }

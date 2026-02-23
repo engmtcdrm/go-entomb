@@ -1,26 +1,26 @@
 package crypt
 
-const (
-	errPrefix                        = "crypt: "
-	errMsgFormat                     = "%s: %w"
-	ErrorEmptyKeyPath                = errPrefix + "key path is empty"
-	ErrorEmptyTombName               = errPrefix + "tomb name is empty"
-	ErrorEmptyTombPath               = errPrefix + "tomb path is empty"
-	ErrorEmptyTombsPath              = errPrefix + "tombs path is empty"
-	ErrorInitializingTombsPath       = errPrefix + "initializing tombs path failed"
-	ErrorInvalidPath                 = errPrefix + "path contains invalid characters"
-	ErrorInvalidKeyPath              = errPrefix + "invalid key path"
-	ErrorInvalidTombName             = errPrefix + "invalid tomb name"
-	ErrorInvalidTombPath             = errPrefix + "invalid tomb path"
-	ErrorInvalidTombsPath            = errPrefix + "invalid tombs path"
-	ErrorMakingTombPathFailed        = errPrefix + "making tomb path failed"
-	ErrorReadingTombFailed           = errPrefix + "reading tomb failed"
-	ErrorWritingTombFailed           = errPrefix + "writing tomb failed"
-	ErrorRemovingFileFailed          = errPrefix + "removing file failed"
-	ErrorRemovingTombFailed          = errPrefix + "removing tomb failed"
-	ErrorEncryptingTombFailed        = errPrefix + "encrypting tomb failed"
-	ErrorDecryptingTombFailed        = errPrefix + "decrypting tomb failed"
-	ErrorTombsPathIsDirectory        = errPrefix + "tombs path exists but is not a directory"
-	ErrorTombNotFound                = errPrefix + "tomb not found"
-	ErrorGettingTombsPathFilesFailed = errPrefix + "getting tombs from tombs path failed"
+import "errors"
+
+var (
+	ErrEmptyKeyPath          = errors.New("key path is empty")
+	ErrEmptyTombName         = errors.New("tomb name is empty")
+	ErrEmptyTombPath         = errors.New("tomb path is empty")
+	ErrEmptyTombsPath        = errors.New("tombs path is empty")
+	ErrInitTombsPath         = errors.New("initializing tombs path failed")
+	ErrInvalidPath           = errors.New("path contains invalid characters")
+	ErrInvalidKeyPath        = errors.New("invalid key path")
+	ErrInvalidTombName       = errors.New("invalid tomb name")
+	ErrInvalidTombPath       = errors.New("invalid tomb path")
+	ErrInvalidTombsPath      = errors.New("invalid tombs path")
+	ErrMakeTombPath          = errors.New("making tomb path failed")
+	ErrReadTomb              = errors.New("reading tomb failed")
+	ErrWriteTomb             = errors.New("writing tomb failed")
+	ErrRemoveFile            = errors.New("removing file failed")
+	ErrRemoveTomb            = errors.New("removing tomb failed")
+	ErrEncryptTomb           = errors.New("encrypting tomb failed")
+	ErrDecryptTomb           = errors.New("decrypting tomb failed")
+	ErrTombsPathNotDirectory = errors.New("tombs path exists but is not a directory")
+	ErrTombNotFound          = errors.New("tomb not found")
+	ErrGetTombs              = errors.New("getting tombs from tombs path failed")
 )
