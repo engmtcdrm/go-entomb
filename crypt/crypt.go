@@ -41,7 +41,7 @@ func NewCrypt(keyPath string, tombsPath string, useHost, useUser bool) (*Crypt, 
 
 	cleanKeyPath, err := cleanAndValidatePath(keyPath)
 	if err != nil {
-		return nil, fmt.Errorf(ErrorMessageFormat, ErrorInvalidKeyPath, err)
+		return nil, fmt.Errorf(errMsgFormat, errors.New(ErrorInvalidKeyPath), err)
 	}
 
 	key, err := entomb.GetKeyHostUser(cleanKeyPath, useHost, useUser)
@@ -58,7 +58,7 @@ func NewCrypt(keyPath string, tombsPath string, useHost, useUser bool) (*Crypt, 
 
 	c.tombsPath, err = cleanAndValidatePath(tombsPath)
 	if err != nil {
-		return nil, fmt.Errorf(ErrorMessageFormat, ErrorInvalidTombsPath, err)
+		return nil, fmt.Errorf(errMsgFormat, ErrorInvalidTombsPath, err)
 	}
 
 	if err := c.initializeTombsPath(); err != nil {
@@ -150,12 +150,12 @@ func (c *Crypt) Entomb(name string, msg []byte) error {
 	fullPath := filepath.Join(c.tombsPath, name+c.tombFileExt)
 	absFullPath, err := cleanAndValidatePath(fullPath)
 	if err != nil {
-		return fmt.Errorf(ErrorMessageFormat, ErrorInvalidTombPath, err)
+		return fmt.Errorf(errMsgFormat, ErrorInvalidTombPath, err)
 	}
 
 	encMsg, err := entomb.Encrypt(c.key, msg)
 	if err != nil {
-		return fmt.Errorf(ErrorMessageFormat, ErrorInvalidTombPath, err)
+		return fmt.Errorf(errMsgFormat, ErrorInvalidTombPath, err)
 	}
 
 	c.tombMu.Lock()
@@ -163,12 +163,12 @@ func (c *Crypt) Entomb(name string, msg []byte) error {
 
 	err = os.MkdirAll(filepath.Dir(absFullPath), DirFilePerms)
 	if err != nil {
-		return fmt.Errorf(ErrorMessageFormat, ErrorMakingTombPathFailed, err)
+		return fmt.Errorf(errMsgFormat, ErrorMakingTombPathFailed, err)
 	}
 
 	err = os.WriteFile(absFullPath, encMsg, FilePerms)
 	if err != nil {
-		return fmt.Errorf(ErrorMessageFormat, ErrorWritingTombFailed, err)
+		return fmt.Errorf(errMsgFormat, ErrorWritingTombFailed, err)
 	}
 
 	c.tombsMu.Lock()
@@ -209,7 +209,7 @@ func (c *Crypt) EntombFromFile(name string, filePath string, cleanup bool) error
 
 	msgBytes, err := os.ReadFile(rawFile)
 	if err != nil {
-		return fmt.Errorf(ErrorMessageFormat, ErrorReadingTombFailed, err)
+		return fmt.Errorf(errMsgFormat, ErrorReadingTombFailed, err)
 	}
 
 	msgBytes = trimSpaceBytes(&msgBytes)
@@ -228,16 +228,16 @@ func (c *Crypt) EntombFromFile(name string, filePath string, cleanup bool) error
 
 	err = os.MkdirAll(newTombPath, DirFilePerms)
 	if err != nil {
-		return fmt.Errorf(ErrorMessageFormat, ErrorMakingTombPathFailed, err)
+		return fmt.Errorf(errMsgFormat, ErrorMakingTombPathFailed, err)
 	}
 
 	if err = os.WriteFile(tomb.Path(), encMsg, FilePerms); err != nil {
-		return fmt.Errorf(ErrorMessageFormat, ErrorWritingTombFailed, err)
+		return fmt.Errorf(errMsgFormat, ErrorWritingTombFailed, err)
 	}
 
 	if cleanup {
 		if err = os.Remove(rawFile); err != nil {
-			return fmt.Errorf(ErrorMessageFormat, ErrorRemovingFileFailed, err)
+			return fmt.Errorf(errMsgFormat, ErrorRemovingFileFailed, err)
 		}
 	}
 
@@ -279,12 +279,12 @@ func (c *Crypt) Exhume(name string) ([]byte, error) {
 
 	encMsg, err := os.ReadFile(tomb.Path())
 	if err != nil {
-		return nil, fmt.Errorf(ErrorMessageFormat, ErrorReadingTombFailed, err)
+		return nil, fmt.Errorf(errMsgFormat, ErrorReadingTombFailed, err)
 	}
 
 	msg, err := entomb.Decrypt(c.key, encMsg)
 	if err != nil {
-		return nil, fmt.Errorf(ErrorMessageFormat, ErrorDecryptingTombFailed, err)
+		return nil, fmt.Errorf(errMsgFormat, ErrorDecryptingTombFailed, err)
 	}
 
 	return msg, nil
@@ -301,13 +301,13 @@ func (c *Crypt) initializeTombsPath() error {
 		if os.IsNotExist(err) {
 			err = os.MkdirAll(c.tombsPath, DirFilePerms)
 			if err != nil {
-				return fmt.Errorf(ErrorMessageFormat, ErrorInitializingTombsPath, err)
+				return fmt.Errorf(errMsgFormat, errors.New(ErrorInitializingTombsPath), err)
 			}
 
 			return nil
 		}
 
-		return fmt.Errorf(ErrorMessageFormat, ErrorInitializingTombsPath, err)
+		return fmt.Errorf(errMsgFormat, errors.New(ErrorInitializingTombsPath), err)
 	}
 
 	if !statPath.IsDir() {
@@ -352,7 +352,7 @@ func (c *Crypt) getTombs() error {
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf(ErrorMessageFormat, ErrorGettingTombsPathFilesFailed, err)
+		return fmt.Errorf(errMsgFormat, ErrorGettingTombsPathFilesFailed, err)
 	}
 
 	c.tombsMu.Lock()
