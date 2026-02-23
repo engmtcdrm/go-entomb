@@ -1,14 +1,16 @@
 package crypt
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-// cleanAbsPath takes a path, cleans it, resolves environment variables, expands tilde, and
-// returns the absolute path. It ensures that the path is in a standardized format for further processing.
-func cleanAbsPath(path string) (string, error) {
+// cleanAndValidatePath takes a path, cleans it, resolves environment variables, expands tilde,
+// and checks for invalid characters, finally returns the absolute path. It ensures that the
+// path is in a standardized format for further processing.
+func cleanAndValidatePath(path string) (string, error) {
 	if path == "" {
 		return "", nil
 	}
@@ -23,6 +25,10 @@ func cleanAbsPath(path string) (string, error) {
 	absPath, err := filepath.Abs(expandedPath)
 	if err != nil {
 		return "", err
+	}
+
+	if isInvalidPath(absPath) {
+		return "", errors.New(ErrorInvalidPath)
 	}
 
 	return absPath, nil

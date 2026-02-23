@@ -2,7 +2,6 @@ package crypt
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"path"
 	"testing"
@@ -10,15 +9,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Tests for cleanAbsPath function.
+// Tests for [cleanAbsPath] function.
 func TestCleanAbsPath(t *testing.T) {
 	t.Run("valid path with environment variable and tilde", func(t *testing.T) {
 		err := os.Setenv("TEST_VAR", "testvalue")
 		assert.NoError(t, err)
 
-		cleanPath, err := cleanAbsPath("~/../$TEST_VAR/testdir")
+		cleanPath, err := cleanAndValidatePath("~/../$TEST_VAR/testdir")
 		assert.NoError(t, err)
 		assert.NotEmpty(t, cleanPath)
+	})
+
+	t.Run("valid path with empty path", func(t *testing.T) {
+
+		cleanPath, err := cleanAndValidatePath("")
+		assert.NoError(t, err)
+		assert.Empty(t, cleanPath)
 	})
 
 	t.Run("valid path with no HOME env var", func(t *testing.T) {
@@ -30,7 +36,7 @@ func TestCleanAbsPath(t *testing.T) {
 		err := os.Unsetenv("HOME")
 		assert.NoError(t, err)
 
-		cleanPath, err := cleanAbsPath("~/testdir")
+		cleanPath, err := cleanAndValidatePath("~/testdir")
 		assert.Error(t, err)
 		assert.Empty(t, cleanPath)
 	})
@@ -56,13 +62,12 @@ func TestCleanAbsPath(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Now filepath.Abs with a relative path should fail
-		_, err = cleanAbsPath("relative/path")
-		fmt.Println(err)
+		_, err = cleanAndValidatePath("relative/path")
 		assert.Error(t, err)
 	})
 }
 
-// Tests for clearMsg function.
+// Tests for [clearMsg] function.
 func TestClearMsg(t *testing.T) {
 	t.Run("valid byte slice with content", func(t *testing.T) {
 		msg := []byte("sensitive data")
@@ -86,7 +91,7 @@ func TestClearMsg(t *testing.T) {
 	})
 }
 
-// Tests for expandTilde function.
+// Tests for [expandTilde] function.
 func TestExpandTilde(t *testing.T) {
 	t.Run("valid path with tilde for expansion", func(t *testing.T) {
 		path, err := expandTilde("~/testdir")
@@ -122,7 +127,7 @@ func TestExpandTilde(t *testing.T) {
 	})
 }
 
-// Tests for resolveEnvVars function.
+// Tests for [resolveEnvVars] function.
 func TestResolveEnvVars(t *testing.T) {
 	t.Run("valid path with env var exists", func(t *testing.T) {
 		err := os.Setenv("TEST_VAR", "testvalue")
@@ -143,7 +148,7 @@ func TestResolveEnvVars(t *testing.T) {
 	})
 }
 
-// Tests for isDirEmpty function.
+// Tests for [isDirEmpty] function.
 func TestIsDirEmpty(t *testing.T) {
 	t.Run("valid path with empty directory", func(t *testing.T) {
 		isEmpty, err := isDirEmpty(t.TempDir())
@@ -169,7 +174,7 @@ func TestIsDirEmpty(t *testing.T) {
 	})
 }
 
-// Tests for trimSpaceBytes function.
+// Tests for [trimSpaceBytes] function.
 func TestTrimSpaceBytes(t *testing.T) {
 	helloWorld := "Hello, World!"
 
