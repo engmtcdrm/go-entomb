@@ -8,7 +8,7 @@ import (
 	"github.com/engmtcdrm/go-entomb/crypt"
 )
 
-// Tests for DefaultValidateTombNamn function.
+// Tests for [crypt.DefaultValidateTombName] function.
 func TestDefaultValidateTombName(t *testing.T) {
 	t.Run("valid name", func(t *testing.T) {
 		err := crypt.DefaultValidateTombName("valid_name-123")

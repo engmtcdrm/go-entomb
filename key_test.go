@@ -14,6 +14,7 @@ const (
 	testMsg        = "test message"
 )
 
+// Tests for [GetKeyHostUser] function.
 func TestGetKeyHostUser(t *testing.T) {
 	t.Run("test with host and user", func(t *testing.T) {
 		keyPath := path.Join(t.TempDir(), "test_key")
@@ -73,6 +74,7 @@ func TestGetKeyHostUser(t *testing.T) {
 	})
 }
 
+// Tests for [GetKey] function.
 func TestGetKey(t *testing.T) {
 	t.Run("test with valid passphrase", func(t *testing.T) {
 		keyPath := path.Join(t.TempDir(), "test_key")

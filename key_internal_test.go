@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// SHA512 is 64 bytes
+// Tests for [readKey] functions.
 func TestReadKey(t *testing.T) {
 	t.Run("empty key path", func(t *testing.T) {
 		key, err := readKey("", []byte("hashedPassphrase"))
@@ -68,10 +68,10 @@ func TestReadKey(t *testing.T) {
 		key, err := readKey(keyPath, hashedPassphrase)
 		assert.NoError(t, err)
 		assert.NotNil(t, key)
-		// assert.Equal(t, originalKey.FernetKey.Encode(), key.FernetKey.Encode())
 	})
 }
 
+// Tests for [genKey] function.
 func TestGenKey(t *testing.T) {
 	t.Run("empty key path", func(t *testing.T) {
 		key, err := genKey("", []byte("hashedPassphrase"))

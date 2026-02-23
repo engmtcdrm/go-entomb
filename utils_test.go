@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Test for [hashValue] function.
 func TestHashSHA(t *testing.T) {
 	data := []byte("test data")
 	hashed, err := hashValue(data)
@@ -16,6 +17,7 @@ func TestHashSHA(t *testing.T) {
 	assert.Equal(t, 64, len(hashed))
 }
 
+// Test for [getRandEncrypt] function.
 func TestGetRandEncrypt(t *testing.T) {
 	size := 32
 	encrypted, err := getRandEncrypt(size)
@@ -23,6 +25,7 @@ func TestGetRandEncrypt(t *testing.T) {
 	assert.NotNil(t, encrypted)
 }
 
+// Test for [saltKey] function.
 func TestSaltValue(t *testing.T) {
 	var key fernet.Key
 	err := key.Generate()
@@ -35,6 +38,7 @@ func TestSaltValue(t *testing.T) {
 	assert.NotNil(t, salted)
 }
 
+// Test for [GetKey] function.
 func TestCreateReadKey(t *testing.T) {
 	keyPath := "test_key"
 	hostUser := "test hu"

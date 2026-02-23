@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Tests for [crypt.NewTomb] function.
 func TestNewTomb(t *testing.T) {
 	t.Run("create tomb", func(t *testing.T) {
 		name := "mytomb"
