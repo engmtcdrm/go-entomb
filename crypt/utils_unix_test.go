@@ -9,20 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Tests for [isValidPath] function.
-func TestIsValidPath(t *testing.T) {
-	t.Run("valid path", func(t *testing.T) {
-		isValid := isValidPath(t.TempDir())
-		assert.True(t, isValid)
-	})
-
-	t.Run("invalid path", func(t *testing.T) {
-		invalidPath := filepath.Join(t.TempDir(), string([]byte("invalid\x00path")))
-		isValid := isValidPath(invalidPath)
-		assert.False(t, isValid)
-	})
-}
-
 // Tests for [isInvalidPath] function.
 func TestIsInvalidPath(t *testing.T) {
 	t.Run("valid path", func(t *testing.T) {

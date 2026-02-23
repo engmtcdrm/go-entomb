@@ -39,11 +39,6 @@ var reservedNames = []string{
 	"LPT9",
 }
 
-// isValidPath checks for characters and reserved names that are not allowed in Windows file paths.
-func isValidPath(path string) bool {
-	return !isInvalidPath(path)
-}
-
 // isInvalidPath checks for characters and reserved names that are not allowed in Windows file paths.
 func isInvalidPath(path string) bool {
 	// Remove drive letter if present
