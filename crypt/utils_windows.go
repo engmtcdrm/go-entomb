@@ -46,13 +46,8 @@ func isValidPath(path string) bool {
 
 // isInvalidPath checks for characters and reserved names that are not allowed in Windows file paths.
 func isInvalidPath(path string) bool {
-	absPath, err := cleanAbsPath(path)
-	if err != nil {
-		return true
-	}
-
 	// Remove drive letter if present
-	_, nonDrivePath, _ := strings.Cut(absPath, `:\`)
+	_, nonDrivePath, _ := strings.Cut(path, `:\`)
 
 	// Check each component of the path for invalid characters
 	paths := strings.Split(nonDrivePath, string(filepath.Separator))
@@ -63,7 +58,7 @@ func isInvalidPath(path string) bool {
 	}
 
 	// Check for reserved names in the last component of the path, e.g. C:\CON or C:\folder\CON
-	base := filepath.Base(absPath)
+	base := filepath.Base(path)
 	for _, reserved := range reservedNames {
 		if strings.EqualFold(base, reserved) {
 			return true
