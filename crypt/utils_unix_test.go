@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Tests for isValidPath function.
+// Tests for [isValidPath] function.
 func TestIsValidPath(t *testing.T) {
 	t.Run("valid path", func(t *testing.T) {
 		isValid := isValidPath(t.TempDir())
@@ -23,7 +23,7 @@ func TestIsValidPath(t *testing.T) {
 	})
 }
 
-// Tests for isInvalidPath function.
+// Tests for [isInvalidPath] function.
 func TestIsInvalidPath(t *testing.T) {
 	t.Run("valid path", func(t *testing.T) {
 		isInvalid := isInvalidPath(t.TempDir())

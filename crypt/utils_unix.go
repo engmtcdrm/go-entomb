@@ -1,4 +1,4 @@
-//go:build linux
+//go:build unix
 
 package crypt
 
@@ -13,11 +13,6 @@ func isValidPath(path string) bool {
 
 // isInvalidPath checks for characters that are not allowed in Linux file paths.
 func isInvalidPath(path string) bool {
-	absPath, err := cleanAbsPath(path)
-	if err != nil {
-		return true
-	}
-
 	// Check for null byte
-	return strings.Contains(absPath, "\x00")
+	return strings.Contains(path, "\x00")
 }
