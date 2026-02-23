@@ -2,6 +2,7 @@ package crypt
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -321,35 +322,7 @@ func (c *Crypt) initializeTombsPath() error {
 func (c *Crypt) getTombs() error {
 	tombs := make(map[string]*Tomb, 0)
 
-	err := filepath.WalkDir(c.tombsPath, func(path string, d os.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if filepath.Ext(path) == c.tombFileExt && !d.IsDir() {
-			relPath, err := filepath.Rel(c.tombsPath, path)
-			if err != nil {
-				return err
-			}
-
-			name := strings.TrimSuffix(relPath, c.tombFileExt)
-			absPath, err := cleanAndValidatePath(path)
-			if err != nil {
-				return err
-			}
-
-			if err := c.validateName(name); err != nil {
-				return err
-			}
-
-			tombs[name], err = NewTomb(name, absPath)
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
+	err := filepath.WalkDir(c.tombsPath, c.walkTombsDirFunc(tombs))
 	if err != nil {
 		return fmt.Errorf(errMsgFormat, ErrGetTombs, err)
 	}
@@ -361,6 +334,37 @@ func (c *Crypt) getTombs() error {
 	c.tombsLastModTime = time.Now()
 
 	return nil
+}
+
+// walkTombsDirFunc returns a WalkDirFunc that collects tomb files into the provided map.
+func (c *Crypt) walkTombsDirFunc(tombs map[string]*Tomb) fs.WalkDirFunc {
+	return func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() || filepath.Ext(path) != c.tombFileExt {
+			return nil
+		}
+
+		relPath, err := filepath.Rel(c.tombsPath, path)
+		if err != nil {
+			return err
+		}
+
+		name := strings.TrimSuffix(relPath, c.tombFileExt)
+		absPath, err := cleanAndValidatePath(path)
+		if err != nil {
+			return err
+		}
+
+		if err := c.validateName(name); err != nil {
+			return err
+		}
+
+		tombs[name], err = NewTomb(name, absPath)
+		return err
+	}
 }
 
 // newTomb creates a new Tomb instance with the given name and path.
