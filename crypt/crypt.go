@@ -40,7 +40,7 @@ func NewCrypt(keyPath string, tombsPath string, useHost, useUser bool) (*Crypt, 
 
 	cleanKeyPath, err := cleanAndValidatePath(keyPath)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrInvalidKeyPath, err)
+		return nil, fmt.Errorf(errMsgFormat, ErrInvalidKeyPath, err)
 	}
 
 	key, err := entomb.GetKeyHostUser(cleanKeyPath, useHost, useUser)
@@ -57,7 +57,7 @@ func NewCrypt(keyPath string, tombsPath string, useHost, useUser bool) (*Crypt, 
 
 	c.tombsPath, err = cleanAndValidatePath(tombsPath)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrInvalidTombsPath, err)
+		return nil, fmt.Errorf(errMsgFormat, ErrInvalidTombsPath, err)
 	}
 
 	if err := c.initializeTombsPath(); err != nil {
@@ -149,12 +149,12 @@ func (c *Crypt) Entomb(name string, msg []byte) error {
 	fullPath := filepath.Join(c.tombsPath, name+c.tombFileExt)
 	absFullPath, err := cleanAndValidatePath(fullPath)
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrInvalidTombPath, err)
+		return fmt.Errorf(errMsgFormat, ErrInvalidTombPath, err)
 	}
 
 	encMsg, err := entomb.Encrypt(c.key, msg)
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrEncryptTomb, err)
+		return fmt.Errorf(errMsgFormat, ErrEncryptTomb, err)
 	}
 
 	c.tombMu.Lock()
@@ -162,12 +162,12 @@ func (c *Crypt) Entomb(name string, msg []byte) error {
 
 	err = os.MkdirAll(filepath.Dir(absFullPath), DirFilePerms)
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrMakeTombPath, err)
+		return fmt.Errorf(errMsgFormat, ErrMakeTombPath, err)
 	}
 
 	err = os.WriteFile(absFullPath, encMsg, FilePerms)
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrWriteTomb, err)
+		return fmt.Errorf(errMsgFormat, ErrWriteTomb, err)
 	}
 
 	c.tombsMu.Lock()
@@ -208,7 +208,7 @@ func (c *Crypt) EntombFromFile(name string, filePath string, cleanup bool) error
 
 	msgBytes, err := os.ReadFile(rawFile)
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrReadTomb, err)
+		return fmt.Errorf(errMsgFormat, ErrReadTomb, err)
 	}
 
 	msgBytes = trimSpaceBytes(&msgBytes)
@@ -227,16 +227,16 @@ func (c *Crypt) EntombFromFile(name string, filePath string, cleanup bool) error
 
 	err = os.MkdirAll(newTombPath, DirFilePerms)
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrMakeTombPath, err)
+		return fmt.Errorf(errMsgFormat, ErrMakeTombPath, err)
 	}
 
 	if err = os.WriteFile(tomb.Path(), encMsg, FilePerms); err != nil {
-		return fmt.Errorf("%w: %w", ErrWriteTomb, err)
+		return fmt.Errorf(errMsgFormat, ErrWriteTomb, err)
 	}
 
 	if cleanup {
 		if err = os.Remove(rawFile); err != nil {
-			return fmt.Errorf("%w: %w", ErrRemoveFile, err)
+			return fmt.Errorf(errMsgFormat, ErrRemoveFile, err)
 		}
 	}
 
@@ -278,12 +278,12 @@ func (c *Crypt) Exhume(name string) ([]byte, error) {
 
 	encMsg, err := os.ReadFile(tomb.Path())
 	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrReadTomb, err)
+		return nil, fmt.Errorf(errMsgFormat, ErrReadTomb, err)
 	}
 
 	msg, err := entomb.Decrypt(c.key, encMsg)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrDecryptTomb, err)
+		return nil, fmt.Errorf(errMsgFormat, ErrDecryptTomb, err)
 	}
 
 	return msg, nil
@@ -300,13 +300,13 @@ func (c *Crypt) initializeTombsPath() error {
 		if os.IsNotExist(err) {
 			err = os.MkdirAll(c.tombsPath, DirFilePerms)
 			if err != nil {
-				return fmt.Errorf("%w: %w", ErrInitTombsPath, err)
+				return fmt.Errorf(errMsgFormat, ErrInitTombsPath, err)
 			}
 
 			return nil
 		}
 
-		return fmt.Errorf("%w: %w", ErrInitTombsPath, err)
+		return fmt.Errorf(errMsgFormat, ErrInitTombsPath, err)
 	}
 
 	if !statPath.IsDir() {
@@ -351,7 +351,7 @@ func (c *Crypt) getTombs() error {
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrGetTombs, err)
+		return fmt.Errorf(errMsgFormat, ErrGetTombs, err)
 	}
 
 	c.tombsMu.Lock()
