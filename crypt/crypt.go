@@ -213,27 +213,10 @@ func (c *Crypt) EntombFromFile(name string, filePath string, cleanup bool) error
 	}
 
 	msgBytes = trimSpaceBytes(&msgBytes)
-	encMsg, err := entomb.Encrypt(c.key, msgBytes)
+	if err := c.Entomb(name, msgBytes); err != nil {
+		return err
+	}
 	clearMsg(&msgBytes)
-	if err != nil {
-		return err
-	}
-
-	tomb, err := c.newTomb(name)
-	if err != nil {
-		return err
-	}
-
-	newTombPath := filepath.Dir(tomb.Path())
-
-	err = os.MkdirAll(newTombPath, DirFilePerms)
-	if err != nil {
-		return fmt.Errorf(errMsgFormat, ErrMakeTombPath, err)
-	}
-
-	if err = os.WriteFile(tomb.Path(), encMsg, FilePerms); err != nil {
-		return fmt.Errorf(errMsgFormat, ErrWriteTomb, err)
-	}
 
 	if cleanup {
 		if err = os.Remove(rawFile); err != nil {
