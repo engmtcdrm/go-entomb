@@ -11,6 +11,9 @@ build:
 	ls -lh |grep examples; \
 	cd ..
 
+doc:
+	@gomarkdoc ./... --exclude-dirs ./examples/...
+
 run:
 	@cd examples; \
 	go run main.go; \
