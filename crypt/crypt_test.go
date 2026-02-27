@@ -1,6 +1,7 @@
 package crypt
 
 import (
+	"io/fs"
 	"os"
 	"path"
 	"testing"
@@ -77,23 +78,6 @@ func TestNewCrypt(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, cryptInstance)
 	})
-
-	// t.Run("invalid create crypt instance with tomb file that has invalid name", func(t *testing.T) {
-	// 	tempDir := t.TempDir()
-	// 	keyPath := path.Join(tempDir, testCryptKeyPath)
-	// 	tombsPath := path.Join(tempDir, testCryptTombsPath)
-	// 	tombWithInvalidName := path.Join(tombsPath, "not.a.valid?name.tomb")
-
-	// 	err := os.MkdirAll(tombsPath, DirFilePerms)
-	// 	assert.NoError(t, err)
-
-	// 	_, err = os.Create(tombWithInvalidName)
-	// 	assert.NoError(t, err)
-
-	// 	cryptInstance, err := NewCrypt(keyPath, tombsPath, true, true)
-	// 	assert.Error(t, err)
-	// 	assert.Nil(t, cryptInstance)
-	// })
 }
 
 // Tests for [Crypt.ValidateTombNameFunc] function.
@@ -350,6 +334,242 @@ func TestCryptEntombFromFile(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+// Tests for [Crypt.Epitaph] function.
+func TestCryptEpitaph(t *testing.T) {
+	cryptInstance := initCrypt(t)
+
+	t.Run("empty crypt", func(t *testing.T) {
+		tombs := cryptInstance.Epitaph()
+		assert.Empty(t, tombs)
+	})
+
+	t.Run("non-empty crypt", func(t *testing.T) {
+		testMsg := []byte("testdata")
+
+		err := cryptInstance.Entomb("testtomb", testMsg)
+		assert.NoError(t, err)
+
+		tombs := cryptInstance.Epitaph()
+		assert.NotEmpty(t, tombs)
+		assert.Len(t, tombs, 1)
+	})
+}
+
+// Tests for [Crypt.Exhume] function.
+func TestCryptExhume(t *testing.T) {
+	cryptInstance := initCrypt(t)
+	testMsg := []byte("testdata")
+
+	t.Run("valid exhume", func(t *testing.T) {
+		err := cryptInstance.Entomb("testtomb", testMsg)
+		assert.NoError(t, err)
+
+		result, err := cryptInstance.Exhume("testtomb")
+		assert.NoError(t, err)
+		assert.Equal(t, testMsg, result)
+	})
+
+	t.Run("non-existent tomb", func(t *testing.T) {
+		_, err := cryptInstance.Exhume("nonexistent")
+		assert.Error(t, err)
+	})
+
+	t.Run("empty tomb name", func(t *testing.T) {
+		_, err := cryptInstance.Exhume("")
+		assert.Error(t, err)
+	})
+
+	t.Run("invalid tomb name", func(t *testing.T) {
+		_, err := cryptInstance.Exhume("\x00not-valid")
+		assert.Error(t, err)
+	})
+
+	t.Run("non-existent tomb file", func(t *testing.T) {
+		err := cryptInstance.Entomb("testtomb", testMsg)
+		assert.NoError(t, err)
+
+		err = os.Remove(path.Join(cryptInstance.tombsPath, "testtomb"+cryptInstance.tombFileExt))
+		assert.NoError(t, err)
+
+		_, err = cryptInstance.Exhume("testtomb")
+		assert.Error(t, err)
+	})
+
+	t.Run("error from entomb.Decrypt", func(t *testing.T) {
+		err := cryptInstance.Entomb("testtomb", testMsg)
+		assert.NoError(t, err)
+
+		cryptInstance.key = nil
+
+		result, err := cryptInstance.Exhume("testtomb")
+		assert.Error(t, err)
+		assert.Nil(t, result)
+	})
+}
+
+// Tests for [Crypt.initializeTombsPath] function.
+func TestCryptInitializeTombsPath(t *testing.T) {
+	t.Run("valid initialization", func(t *testing.T) {
+		cryptInstance := initCrypt(t)
+		cryptInstance.tombsPath = t.TempDir()
+		err := cryptInstance.initializeTombsPath()
+		assert.NoError(t, err)
+		assert.DirExists(t, cryptInstance.tombsPath)
+	})
+
+	t.Run("empty tombsPath", func(t *testing.T) {
+		cryptInstance := initCrypt(t)
+		cryptInstance.tombsPath = ""
+		err := cryptInstance.initializeTombsPath()
+		assert.Error(t, err)
+		assert.NoDirExists(t, cryptInstance.tombsPath)
+	})
+
+	t.Run("unwritable tombsPath", func(t *testing.T) {
+		cryptInstance := initCrypt(t)
+		tombsPath := path.Join(t.TempDir(), "tombs")
+		err := os.MkdirAll(tombsPath, 0000)
+		assert.NoError(t, err)
+		defer os.Remove(tombsPath)
+
+		cryptInstance.tombsPath = path.Join(tombsPath, "subdir")
+		err = cryptInstance.initializeTombsPath()
+		assert.Error(t, err)
+		assert.NoDirExists(t, cryptInstance.tombsPath)
+	})
+
+	t.Run("tombsPath is a file", func(t *testing.T) {
+		cryptInstance := initCrypt(t)
+		tombsPath := path.Join(t.TempDir(), "tombs")
+		err := os.WriteFile(tombsPath, []byte("thisisafile"), 0644)
+		assert.NoError(t, err)
+		defer os.Remove(tombsPath)
+
+		cryptInstance.tombsPath = tombsPath
+		err = cryptInstance.initializeTombsPath()
+		assert.Error(t, err)
+		assert.NoDirExists(t, cryptInstance.tombsPath)
+	})
+}
+
+// Tests for [Crypt.getTombs] function.
+func TestCryptGetTombs(t *testing.T) {
+	// Need to implement tests
+}
+
+// Tests for [Crypt.walkTombsDirFunc] function.
+func TestCryptWalkTombsDirFunc(t *testing.T) {
+	cryptInstance := initCrypt(t)
+	t.Run("valid walkTombsDirFunc", func(t *testing.T) {
+		walkFunc := cryptInstance.walkTombsDirFunc(cryptInstance.tombs)
+		assert.NotNil(t, walkFunc)
+
+		dirEntry := &mockDirEntry{}
+
+		validTomb := path.Join(cryptInstance.tombsPath, "valid.tomb")
+
+		err := walkFunc(validTomb, dirEntry, nil)
+		assert.NoError(t, err)
+	})
+
+	t.Run("nil tombs map", func(t *testing.T) {
+		walkFunc := cryptInstance.walkTombsDirFunc(nil)
+		err := walkFunc("", nil, nil)
+		assert.Error(t, err)
+	})
+
+	t.Run("error from filepath.Rel", func(t *testing.T) {
+		cryptInstance := initCrypt(t)
+		walkFunc := cryptInstance.walkTombsDirFunc(cryptInstance.tombs)
+
+		dirEntry := &mockDirEntry{}
+
+		err := walkFunc("\x00fake.tomb", dirEntry, nil)
+		assert.Error(t, err)
+	})
+
+	t.Run("error from cleanAndValidatePath", func(t *testing.T) {
+		cryptInstance := initCrypt(t)
+		cryptInstance.tombsPath = "\x00not-valid-path"
+		walkFunc := cryptInstance.walkTombsDirFunc(cryptInstance.tombs)
+
+		dirEntry := &mockDirEntry{}
+
+		err := walkFunc("\x00fake.tomb", dirEntry, nil)
+		assert.Error(t, err)
+	})
+
+	t.Run("error from cleanAndValidatePath2", func(t *testing.T) {
+		cryptInstance := initCrypt(t)
+		walkFunc := cryptInstance.walkTombsDirFunc(cryptInstance.tombs)
+
+		dirEntry := &mockDirEntry{}
+
+		err := walkFunc("/not!a!valid.tomb", dirEntry, nil)
+		assert.Error(t, err)
+	})
+}
+
+// Tests for [Crypt.newTomb] function.
+func TestCryptNewTomb(t *testing.T) {
+	cryptInstance := initCrypt(t)
+	_ = cryptInstance
+
+	t.Run("valid new tomb", func(t *testing.T) {
+		tomb, err := cryptInstance.newTomb("testtomb")
+		assert.NoError(t, err)
+		assert.NotNil(t, tomb)
+		assert.Equal(t, "testtomb", tomb.Name())
+		assert.Equal(t, path.Join(cryptInstance.tombsPath, "testtomb"+cryptInstance.tombFileExt), tomb.Path())
+	})
+
+	t.Run("empty name", func(t *testing.T) {
+		tomb, err := cryptInstance.newTomb("")
+		assert.Error(t, err)
+		assert.Nil(t, tomb)
+	})
+}
+
+// Tests for [Crypt.validateName] function.
+func TestCryptValidateName(t *testing.T) {
+	cryptInstance := initCrypt(t)
+
+	t.Run("valid name", func(t *testing.T) {
+		err := cryptInstance.validateName("validname")
+		assert.NoError(t, err)
+	})
+
+	t.Run("empty name", func(t *testing.T) {
+		err := cryptInstance.validateName("")
+		assert.Error(t, err)
+	})
+
+	t.Run("invalid name from isInvalidPath", func(t *testing.T) {
+		err := cryptInstance.validateName("\x00invalid")
+		assert.Error(t, err)
+	})
+
+	t.Run("invalid name from validateTombNameFn", func(t *testing.T) {
+		err := cryptInstance.validateName("?][invalid")
+		assert.Error(t, err)
+	})
+
+	t.Run("nil validateTombNameFn", func(t *testing.T) {
+		cryptInstance := initCrypt(t)
+		cryptInstance.validateTombNameFn = nil
+		err := cryptInstance.validateName("validname")
+		assert.NoError(t, err)
+	})
+}
+
+// mockDirEntry is a mock implementation of the fs.DirEntry interface for testing purposes.
+type mockDirEntry struct{}
+
+func (f *mockDirEntry) Name() string               { return "fake.tomb" }
+func (f *mockDirEntry) IsDir() bool                { return false }
+func (f *mockDirEntry) Type() fs.FileMode          { return 0 }
+func (f *mockDirEntry) Info() (fs.FileInfo, error) { return nil, nil }
 
 // initCrypt is a helper function for creating a valid instance
 // of [Crypt] for testing purposes.
