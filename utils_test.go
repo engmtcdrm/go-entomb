@@ -19,10 +19,19 @@ func TestHashSHA(t *testing.T) {
 
 // Test for [getRandEncrypt] function.
 func TestGetRandEncrypt(t *testing.T) {
-	size := 32
-	encrypted, err := getRandEncrypt(size)
-	assert.NoError(t, err)
-	assert.NotNil(t, encrypted)
+	t.Run("valid getRandEncrypt", func(t *testing.T) {
+		size := 32
+		encrypted, err := getRandEncrypt(size)
+		assert.NoError(t, err)
+		assert.NotNil(t, encrypted)
+	})
+
+	t.Run("invalid getRandEncrypt with negative size", func(t *testing.T) {
+		size := -1
+		encrypted, err := getRandEncrypt(size)
+		assert.Error(t, err)
+		assert.Nil(t, encrypted)
+	})
 }
 
 // Test for [saltKey] function.

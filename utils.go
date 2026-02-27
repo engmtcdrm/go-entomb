@@ -3,6 +3,7 @@ package entomb
 import (
 	"crypto/rand"
 	"crypto/sha512"
+	"fmt"
 	"log"
 	"math/big"
 	"os/user"
@@ -26,6 +27,10 @@ func init() {
 // getRandEncrypt generates random data of size s, encrypts it with a random
 // Fernet key, and returns the encrypted data.
 func getRandEncrypt(s int) ([]byte, error) {
+	if s < 0 {
+		return nil, fmt.Errorf("invalid size: %d", s)
+	}
+
 	d := make([]byte, s)
 	_, err := rand.Read(d)
 	if err != nil {
