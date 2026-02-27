@@ -276,6 +276,10 @@ func (c *Crypt) Exhume(name string) ([]byte, error) {
 // initializeTombsPath validates the tombs path, creates it if it doesn't exist,
 // and sets the absolute path to the struct.
 func (c *Crypt) initializeTombsPath() error {
+	if c.tombsPath == "" {
+		return ErrEmptyTombsPath
+	}
+
 	c.tombsMu.Lock()
 	defer c.tombsMu.Unlock()
 
@@ -321,6 +325,12 @@ func (c *Crypt) getTombs() error {
 
 // walkTombsDirFunc returns a WalkDirFunc that collects tomb files into the provided map.
 func (c *Crypt) walkTombsDirFunc(tombs map[string]*Tomb) fs.WalkDirFunc {
+	if tombs == nil {
+		return func(path string, d os.DirEntry, err error) error {
+			return ErrInvalidTombsPath
+		}
+	}
+
 	return func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -335,12 +345,12 @@ func (c *Crypt) walkTombsDirFunc(tombs map[string]*Tomb) fs.WalkDirFunc {
 			return err
 		}
 
-		name := strings.TrimSuffix(relPath, c.tombFileExt)
 		absPath, err := cleanAndValidatePath(path)
 		if err != nil {
 			return err
 		}
 
+		name := strings.TrimSuffix(relPath, c.tombFileExt)
 		if err := c.validateName(name); err != nil {
 			return err
 		}
@@ -361,12 +371,18 @@ func (c *Crypt) newTomb(name string) (*Tomb, error) {
 // validateName checks if the tomb name is valid using both path validation and
 // the custom validation function if it is set.
 func (c *Crypt) validateName(name string) error {
+	if name == "" {
+		return ErrEmptyTombName
+	}
+
 	if isInvalidPath(name) {
 		return ErrInvalidTombName
 	}
 
-	if err := c.validateTombNameFn(name); err != nil {
-		return err
+	if c.validateTombNameFn != nil {
+		if err := c.validateTombNameFn(name); err != nil {
+			return err
+		}
 	}
 
 	return nil
