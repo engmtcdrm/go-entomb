@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -42,6 +43,10 @@ func TestCleanAbsPath(t *testing.T) {
 	})
 
 	t.Run("filepath.Abs error when cwd is deleted", func(t *testing.T) {
+		if runtime.GOOS == "darwin" {
+			t.Skip("Skipping test on macOS due to OS-specific behavior")
+		}
+
 		tempDir := t.TempDir()
 		testTmpDir, err := os.MkdirTemp(tempDir, "test")
 		assert.NoError(t, err)
