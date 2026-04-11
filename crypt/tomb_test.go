@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/engmtcdrm/go-entomb/crypt"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Tests for [crypt.NewTomb] function.
@@ -13,24 +13,24 @@ func TestNewTomb(t *testing.T) {
 		name := "mytomb"
 		path := "/path/to/mytomb"
 		tomb, err := crypt.NewTomb(name, path)
-		assert.NoError(t, err)
-		assert.Equal(t, name, tomb.Name())
-		assert.Equal(t, path, tomb.Path())
+		require.NoError(t, err)
+		require.Equal(t, name, tomb.Name())
+		require.Equal(t, path, tomb.Path())
 	})
 
 	t.Run("create tomb with empty name", func(t *testing.T) {
 		name := ""
 		path := "/path/to/mytomb"
 		tomb, err := crypt.NewTomb(name, path)
-		assert.Error(t, err)
-		assert.Nil(t, tomb)
+		require.Error(t, err)
+		require.Nil(t, tomb)
 	})
 
 	t.Run("create tomb with empty path", func(t *testing.T) {
 		name := "mytomb"
 		path := ""
 		tomb, err := crypt.NewTomb(name, path)
-		assert.Error(t, err)
-		assert.Nil(t, tomb)
+		require.Error(t, err)
+		require.Nil(t, tomb)
 	})
 }
