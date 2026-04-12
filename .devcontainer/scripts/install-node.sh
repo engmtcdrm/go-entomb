@@ -8,7 +8,7 @@ set -e
 echo "Installing nvm..."
 NVM_DIR="$HOME/.nvm"
 if [ ! -d "$NVM_DIR" ]; then
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.4/install.sh | bash
 else
   echo "nvm is already installed."
 fi
@@ -19,7 +19,7 @@ source "$NVM_DIR/nvm.sh"  # This loads nvm
 source "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 # Install a specific version of Node.js
-NODE_VERSION="20.12.0"
+NODE_VERSION="24.14.1"
 echo "Installing Node.js version $NODE_VERSION..."
 nvm install $NODE_VERSION
 
