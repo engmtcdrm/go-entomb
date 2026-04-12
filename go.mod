@@ -1,6 +1,6 @@
 module github.com/engmtcdrm/go-entomb
 
-go 1.25.8
+go 1.25.9
 
 require (
 	github.com/fernet/fernet-go v0.0.0-20240119011108-303da6aec611
