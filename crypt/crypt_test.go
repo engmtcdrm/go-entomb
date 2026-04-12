@@ -340,14 +340,21 @@ func Test_Crypt_EntombFromFile(t *testing.T) {
 		err := os.WriteFile(testFilePath, testMsg, 0644)
 		require.NoError(t, err)
 
-		// Set temp directory to read only so os.Remove fails
-		err = testutils.PermissionTestReadOnly(
-			testFilePath,
-			cryptInstance.EntombFromFile,
-			"testtomb", testFilePath, true,
-		)
+		if runtime.GOOS == "windows" {
+			// Set temp directory to read only so os.Remove fails
+			err = testutils.PermissionTestReadOnly(
+				testFilePath,
+				cryptInstance.EntombFromFile,
+				"testtomb", testFilePath, true,
+			)
+		} else {
+			// Set temp directory to read only so os.Remove fails
+			err = os.Chmod(tempDir, 0500)
+			require.NoError(t, err)
+			defer os.Chmod(tempDir, 0700)
 
-		// err = cryptInstance.EntombFromFile("testtomb", testFilePath, true)
+			err = cryptInstance.EntombFromFile("testtomb", testFilePath, true)
+		}
 		require.Error(t, err)
 	})
 }
