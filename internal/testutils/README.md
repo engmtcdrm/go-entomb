@@ -9,6 +9,8 @@
 import "github.com/engmtcdrm/go-entomb/internal/testutils"
 ```
 
+Package testutils provides utility functions and types for testing purposes.
+
 ## Index
 
 - [func CreateTempFile\(dir, name string\) \(\*os.File, error\)](<#CreateTempFile>)
