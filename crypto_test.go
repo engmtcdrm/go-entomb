@@ -2,7 +2,7 @@ package entomb_test
 
 import (
 	"bytes"
-	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/engmtcdrm/go-entomb"
@@ -12,7 +12,7 @@ import (
 
 func Test_Encrypt(t *testing.T) {
 	t.Run("test valid key and message", func(t *testing.T) {
-		keyPath := path.Join(t.TempDir(), "test_key")
+		keyPath := filepath.Join(t.TempDir(), "test_key")
 		key, err := entomb.GetKeyHostUser(keyPath, true, true)
 		require.NoError(t, err)
 		require.NotNil(t, key)
@@ -44,7 +44,7 @@ func Test_Encrypt(t *testing.T) {
 	})
 
 	t.Run("test valid key and nil message", func(t *testing.T) {
-		keyPath := path.Join(t.TempDir(), "test_key")
+		keyPath := filepath.Join(t.TempDir(), "test_key")
 		key, err := entomb.GetKeyHostUser(keyPath, true, true)
 		require.NoError(t, err)
 		require.NotNil(t, key)
@@ -57,7 +57,7 @@ func Test_Encrypt(t *testing.T) {
 
 func Test_Decrypt(t *testing.T) {
 	t.Run("test valid key and message", func(t *testing.T) {
-		keyPath := path.Join(t.TempDir(), "test_key")
+		keyPath := filepath.Join(t.TempDir(), "test_key")
 		key, err := entomb.GetKeyHostUser(keyPath, true, true)
 		require.NoError(t, err)
 		require.NotNil(t, key)
@@ -80,7 +80,7 @@ func Test_Decrypt(t *testing.T) {
 	})
 
 	t.Run("test valid key and message", func(t *testing.T) {
-		keyPath := path.Join(t.TempDir(), "test_key")
+		keyPath := filepath.Join(t.TempDir(), "test_key")
 		key, err := entomb.GetKeyHostUser(keyPath, true, true)
 		require.NoError(t, err)
 		require.NotNil(t, key)

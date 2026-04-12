@@ -2,7 +2,7 @@ package entomb
 
 import (
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -29,7 +29,7 @@ func Test_readKey(t *testing.T) {
 	})
 
 	t.Run("bad key", func(t *testing.T) {
-		keyPath := path.Join(t.TempDir(), "test_key")
+		keyPath := filepath.Join(t.TempDir(), "test_key")
 		badFakeKey, err := getRandEncrypt(1000)
 		require.NoError(t, err)
 
@@ -46,7 +46,7 @@ func Test_readKey(t *testing.T) {
 	})
 
 	t.Run("valid key, mismatched passphrase", func(t *testing.T) {
-		keyPath := path.Join(t.TempDir(), "test_key")
+		keyPath := filepath.Join(t.TempDir(), "test_key")
 		key, err := GetKey(keyPath, []byte("test_passphrase"))
 		require.NoError(t, err)
 		require.NotNil(t, key)
@@ -57,7 +57,7 @@ func Test_readKey(t *testing.T) {
 	})
 
 	t.Run("valid key and passphrase", func(t *testing.T) {
-		keyPath := path.Join(t.TempDir(), "test_key")
+		keyPath := filepath.Join(t.TempDir(), "test_key")
 		originalKey, err := GetKey(keyPath, []byte("test_passphrase"))
 		require.NoError(t, err)
 		require.NotNil(t, originalKey)
@@ -92,7 +92,7 @@ func Test_genKey(t *testing.T) {
 	})
 
 	t.Run("valid key generation", func(t *testing.T) {
-		keyPath := path.Join(t.TempDir(), "test_key")
+		keyPath := filepath.Join(t.TempDir(), "test_key")
 		key, err := genKey(keyPath, []byte("hashedPassphrase"))
 		require.NoError(t, err)
 		require.NotNil(t, key)

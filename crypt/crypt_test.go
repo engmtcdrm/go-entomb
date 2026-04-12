@@ -3,9 +3,11 @@ package crypt
 import (
 	"io/fs"
 	"os"
-	"path"
+	"path/filepath"
+	"runtime"
 	"testing"
 
+	"github.com/engmtcdrm/go-entomb/internal/testutils"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,7 +25,7 @@ func Test_NewCrypt(t *testing.T) {
 
 	t.Run("invalid create crypt instance with empty keyPath", func(t *testing.T) {
 		tempDir := t.TempDir()
-		tombsPath := path.Join(tempDir, testCryptTombsPath)
+		tombsPath := filepath.Join(tempDir, testCryptTombsPath)
 
 		cryptInstance, err := NewCrypt("", tombsPath, true, true)
 		require.Error(t, err)
@@ -32,8 +34,8 @@ func Test_NewCrypt(t *testing.T) {
 
 	t.Run("invalid create crypt instance with invalid key path", func(t *testing.T) {
 		tempDir := t.TempDir()
-		keyPath := path.Join(tempDir, "\x00"+testCryptKeyPath)
-		tombsPath := path.Join(tempDir, testCryptTombsPath)
+		keyPath := filepath.Join(tempDir, "\x00"+testCryptKeyPath)
+		tombsPath := filepath.Join(tempDir, testCryptTombsPath)
 
 		cryptInstance, err := NewCrypt(keyPath, tombsPath, true, true)
 		require.Error(t, err)
@@ -42,7 +44,7 @@ func Test_NewCrypt(t *testing.T) {
 
 	t.Run("invalid create crypt instance with empty tombsPath", func(t *testing.T) {
 		tempDir := t.TempDir()
-		keyPath := path.Join(tempDir, testCryptKeyPath)
+		keyPath := filepath.Join(tempDir, testCryptKeyPath)
 
 		cryptInstance, err := NewCrypt(keyPath, "", true, true)
 		require.Error(t, err)
@@ -51,8 +53,8 @@ func Test_NewCrypt(t *testing.T) {
 
 	t.Run("invalid create crypt instance with invalid tombsPath", func(t *testing.T) {
 		tempDir := t.TempDir()
-		keyPath := path.Join(tempDir, testCryptKeyPath)
-		tombsPath := path.Join(tempDir, "\x00"+testCryptTombsPath)
+		keyPath := filepath.Join(tempDir, testCryptKeyPath)
+		tombsPath := filepath.Join(tempDir, "\x00"+testCryptTombsPath)
 
 		cryptInstance, err := NewCrypt(keyPath, tombsPath, true, true)
 		require.Error(t, err)
@@ -61,8 +63,13 @@ func Test_NewCrypt(t *testing.T) {
 
 	t.Run("invalid create crypt instance with key path that does not exist", func(t *testing.T) {
 		tempDir := t.TempDir()
-		keyPath := path.Join("/does/not/exist", testCryptKeyPath)
-		tombsPath := path.Join(tempDir, testCryptTombsPath)
+		keyPath := filepath.Join("/does/not/exist", testCryptKeyPath)
+
+		if runtime.GOOS == "windows" {
+			keyPath = filepath.Join("TEST:\\does\\not\\exist", testCryptKeyPath)
+		}
+
+		tombsPath := filepath.Join(tempDir, testCryptTombsPath)
 
 		cryptInstance, err := NewCrypt(keyPath, tombsPath, true, true)
 		require.Error(t, err)
@@ -71,8 +78,12 @@ func Test_NewCrypt(t *testing.T) {
 
 	t.Run("invalid create crypt instance with tombs path that does not exist", func(t *testing.T) {
 		tempDir := t.TempDir()
-		keyPath := path.Join(tempDir, testCryptKeyPath)
-		tombsPath := path.Join("/does/not/exist", testCryptTombsPath)
+		keyPath := filepath.Join(tempDir, testCryptKeyPath)
+		tombsPath := filepath.Join("/does/not/exist", testCryptTombsPath)
+
+		if runtime.GOOS == "windows" {
+			tombsPath = filepath.Join("TEST:\\does\\not\\exist", testCryptTombsPath)
+		}
 
 		cryptInstance, err := NewCrypt(keyPath, tombsPath, true, true)
 		require.Error(t, err)
@@ -224,6 +235,10 @@ func Test_Crypt_Entomb(t *testing.T) {
 		cryptInstance := initCrypt(t)
 		cryptInstance.tombsPath = "/does/not/exist"
 
+		if runtime.GOOS == "windows" {
+			cryptInstance.tombsPath = "Z:\\does\\not\\exist"
+		}
+
 		err := cryptInstance.Entomb("testtomb", testMsg)
 		require.Error(t, err)
 	})
@@ -231,11 +246,11 @@ func Test_Crypt_Entomb(t *testing.T) {
 	t.Run("bad tombs path permissions", func(t *testing.T) {
 		cryptInstance := initCrypt(t)
 
-		err := os.Chmod(cryptInstance.tombsPath, 0000)
-		require.NoError(t, err)
-		defer os.Chmod(cryptInstance.tombsPath, 0755)
-
-		err = cryptInstance.Entomb("testtomb", testMsg)
+		err := testutils.PermissionTest(
+			cryptInstance.tombsPath,
+			cryptInstance.Entomb,
+			"testtomb", testMsg,
+		)
 		require.Error(t, err)
 	})
 }
@@ -246,7 +261,7 @@ func Test_Crypt_EntombFromFile(t *testing.T) {
 	testMsg := []byte("testdata")
 
 	t.Run("valid entomb from file without cleanup", func(t *testing.T) {
-		testFilePath := path.Join(t.TempDir(), "testfile.txt")
+		testFilePath := filepath.Join(t.TempDir(), "testfile.txt")
 
 		err := os.WriteFile(testFilePath, testMsg, 0644)
 		require.NoError(t, err)
@@ -260,7 +275,7 @@ func Test_Crypt_EntombFromFile(t *testing.T) {
 	})
 
 	t.Run("valid entomb from file with cleanup", func(t *testing.T) {
-		testFilePath := path.Join(t.TempDir(), "testfile.txt")
+		testFilePath := filepath.Join(t.TempDir(), "testfile.txt")
 
 		err := os.WriteFile(testFilePath, testMsg, 0644)
 		require.NoError(t, err)
@@ -309,7 +324,7 @@ func Test_Crypt_EntombFromFile(t *testing.T) {
 	t.Run("error from Entomb func", func(t *testing.T) {
 		cryptInstance := initCrypt(t)
 		cryptInstance.key = nil
-		testFilePath := path.Join(t.TempDir(), "testfile.txt")
+		testFilePath := filepath.Join(t.TempDir(), "testfile.txt")
 
 		err := os.WriteFile(testFilePath, testMsg, 0644)
 		require.NoError(t, err)
@@ -320,17 +335,19 @@ func Test_Crypt_EntombFromFile(t *testing.T) {
 
 	t.Run("os.Remove error from cleanup", func(t *testing.T) {
 		tempDir := t.TempDir()
-		testFilePath := path.Join(tempDir, "testfile.txt")
+		testFilePath := filepath.Join(tempDir, "testfile.txt")
 
 		err := os.WriteFile(testFilePath, testMsg, 0644)
 		require.NoError(t, err)
 
 		// Set temp directory to read only so os.Remove fails
-		err = os.Chmod(tempDir, 0500)
-		require.NoError(t, err)
-		defer os.Chmod(tempDir, 0700)
+		err = testutils.PermissionTestReadOnly(
+			testFilePath,
+			cryptInstance.EntombFromFile,
+			"testtomb", testFilePath, true,
+		)
 
-		err = cryptInstance.EntombFromFile("testtomb", testFilePath, true)
+		// err = cryptInstance.EntombFromFile("testtomb", testFilePath, true)
 		require.Error(t, err)
 	})
 }
@@ -389,7 +406,7 @@ func Test_Crypt_Exhume(t *testing.T) {
 		err := cryptInstance.Entomb("testtomb", testMsg)
 		require.NoError(t, err)
 
-		err = os.Remove(path.Join(cryptInstance.tombsPath, "testtomb"+cryptInstance.tombFileExt))
+		err = os.Remove(filepath.Join(cryptInstance.tombsPath, "testtomb"+cryptInstance.tombFileExt))
 		require.NoError(t, err)
 
 		_, err = cryptInstance.Exhume("testtomb")
@@ -428,20 +445,17 @@ func Test_Crypt_initializeTombsPath(t *testing.T) {
 
 	t.Run("unwritable tombsPath", func(t *testing.T) {
 		cryptInstance := initCrypt(t)
-		tombsPath := path.Join(t.TempDir(), "tombs")
-		err := os.MkdirAll(tombsPath, 0000)
-		require.NoError(t, err)
-		defer os.Remove(tombsPath)
+		tombsPath := filepath.Join(t.TempDir(), "tombs")
+		cryptInstance.tombsPath = filepath.Join(tombsPath, "subdir")
 
-		cryptInstance.tombsPath = path.Join(tombsPath, "subdir")
-		err = cryptInstance.initializeTombsPath()
+		err := testutils.PermissionTest(tombsPath, cryptInstance.initializeTombsPath)
 		require.Error(t, err)
 		require.NoDirExists(t, cryptInstance.tombsPath)
 	})
 
 	t.Run("tombsPath is a file", func(t *testing.T) {
 		cryptInstance := initCrypt(t)
-		tombsPath := path.Join(t.TempDir(), "tombs")
+		tombsPath := filepath.Join(t.TempDir(), "tombs")
 		err := os.WriteFile(tombsPath, []byte("thisisafile"), 0644)
 		require.NoError(t, err)
 		defer os.Remove(tombsPath)
@@ -467,7 +481,7 @@ func Test_Crypt_walkTombsDirFunc(t *testing.T) {
 
 		dirEntry := &mockDirEntry{}
 
-		validTomb := path.Join(cryptInstance.tombsPath, "valid.tomb")
+		validTomb := filepath.Join(cryptInstance.tombsPath, "valid.tomb")
 
 		err := walkFunc(validTomb, dirEntry, nil)
 		require.NoError(t, err)
@@ -514,14 +528,14 @@ func Test_Crypt_walkTombsDirFunc(t *testing.T) {
 // Tests for [Crypt.newTomb] function.
 func Test_Crypt_newTomb(t *testing.T) {
 	cryptInstance := initCrypt(t)
-	_ = cryptInstance
 
 	t.Run("valid new tomb", func(t *testing.T) {
 		tomb, err := cryptInstance.newTomb("testtomb")
 		require.NoError(t, err)
 		require.NotNil(t, tomb)
 		require.Equal(t, "testtomb", tomb.Name())
-		require.Equal(t, path.Join(cryptInstance.tombsPath, "testtomb"+cryptInstance.tombFileExt), tomb.Path())
+		expectedPath := filepath.Join(cryptInstance.tombsPath, "testtomb"+cryptInstance.tombFileExt)
+		require.Equal(t, expectedPath, tomb.Path())
 	})
 
 	t.Run("empty name", func(t *testing.T) {
@@ -574,9 +588,11 @@ func (f *mockDirEntry) Info() (fs.FileInfo, error) { return nil, nil }
 // initCrypt is a helper function for creating a valid instance
 // of [Crypt] for testing purposes.
 func initCrypt(t *testing.T) *Crypt {
+	t.Helper()
+
 	tempDir := t.TempDir()
-	keyPath := path.Join(tempDir, testCryptKeyPath)
-	tombsPath := path.Join(tempDir, testCryptTombsPath)
+	keyPath := filepath.Join(tempDir, testCryptKeyPath)
+	tombsPath := filepath.Join(tempDir, testCryptTombsPath)
 
 	c, err := NewCrypt(keyPath, tombsPath, true, true)
 	require.NoError(t, err)

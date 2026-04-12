@@ -3,7 +3,7 @@ package crypt
 import (
 	"bytes"
 	"os"
-	"path"
+	"path/filepath"
 	"runtime"
 	"testing"
 
@@ -178,7 +178,7 @@ func Test_isDirEmpty(t *testing.T) {
 	})
 
 	t.Run("invalid path with non-existent directory", func(t *testing.T) {
-		isEmpty, err := isDirEmpty(path.Join(t.TempDir(), "does-not-exist"))
+		isEmpty, err := isDirEmpty(filepath.Join(t.TempDir(), "does-not-exist"))
 		require.Error(t, err)
 		require.False(t, isEmpty)
 	})
