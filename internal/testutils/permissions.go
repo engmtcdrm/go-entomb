@@ -9,7 +9,7 @@ import (
 )
 
 // PermissionTest is a helper function to wrap another function that requires a
-// file to have specific permissions.
+// file to have no permissions.
 func PermissionTest(filePermPath string, fn interface{}, args ...interface{}) error {
 	var err error
 
@@ -49,6 +49,8 @@ func PermissionTest(filePermPath string, fn interface{}, args ...interface{}) er
 	return err
 }
 
+// PermissionTestReadOnly is a helper function to wrap another function that
+// requires a file to have read-only permissions.
 func PermissionTestReadOnly(filePermPath string, fn interface{}, args ...interface{}) error {
 	var err error
 
