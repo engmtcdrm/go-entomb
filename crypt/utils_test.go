@@ -34,8 +34,11 @@ func Test_cleanAndValidatePath(t *testing.T) {
 			err := os.Setenv("HOME", origHomeVar)
 			require.NoError(t, err)
 		}()
-		err := os.Unsetenv("HOME")
-		require.NoError(t, err)
+
+		origVarName, origVarValue := unsetHomeVariable(t)
+		defer func() {
+			os.Setenv(origVarName, origVarValue)
+		}()
 
 		cleanPath, err := cleanAndValidatePath("~/testdir")
 		require.Error(t, err)
@@ -43,8 +46,8 @@ func Test_cleanAndValidatePath(t *testing.T) {
 	})
 
 	t.Run("filepath.Abs error when cwd is deleted", func(t *testing.T) {
-		if runtime.GOOS == "darwin" {
-			t.Skip("Skipping test on macOS due to OS-specific behavior")
+		if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {
+			t.Skip("Skipping test on macOS and Windows due to OS-specific behavior")
 		}
 
 		tempDir := t.TempDir()
@@ -123,8 +126,10 @@ func Test_expandTilde(t *testing.T) {
 	})
 
 	t.Run("invalid path with no HOME env var", func(t *testing.T) {
-		err := os.Unsetenv("HOME")
-		require.NoError(t, err)
+		origVarName, origVarValue := unsetHomeVariable(t)
+		defer func() {
+			os.Setenv(origVarName, origVarValue)
+		}()
 
 		path, err := expandTilde("~/testdir")
 		require.Error(t, err)
@@ -211,4 +216,28 @@ func Test_trimSpaceBytes(t *testing.T) {
 		result := trimSpaceBytes(nil)
 		require.Nil(t, result)
 	})
+}
+
+// unsetHomeVariable is a helper function to store the original home variable
+// name and value, unset it for testing, and return the original name and value
+// for restoration after the test.
+func unsetHomeVariable(t *testing.T) (string, string) {
+	t.Helper()
+
+	origVarName := "HOME"
+	origVarValue := os.Getenv(origVarName)
+	err := os.Unsetenv(origVarName)
+	switch runtime.GOOS {
+	case "windows":
+		origVarName = "USERPROFILE"
+		origVarValue = os.Getenv(origVarName)
+		err = os.Unsetenv(origVarName)
+	case "plan9":
+		origVarName = "home"
+		origVarValue = os.Getenv(origVarName)
+		err = os.Unsetenv(origVarName)
+	}
+	require.NoError(t, err)
+
+	return origVarName, origVarValue
 }
