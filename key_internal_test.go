@@ -9,7 +9,7 @@ import (
 )
 
 // Tests for [readKey] functions.
-func TestReadKey(t *testing.T) {
+func Test_readKey(t *testing.T) {
 	t.Run("empty key path", func(t *testing.T) {
 		key, err := readKey("", []byte("hashedPassphrase"))
 		require.Error(t, err)
@@ -72,7 +72,7 @@ func TestReadKey(t *testing.T) {
 }
 
 // Tests for [genKey] function.
-func TestGenKey(t *testing.T) {
+func Test_genKey(t *testing.T) {
 	t.Run("empty key path", func(t *testing.T) {
 		key, err := genKey("", []byte("hashedPassphrase"))
 		require.Error(t, err)

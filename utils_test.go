@@ -9,7 +9,7 @@ import (
 )
 
 // Test for [hashValue] function.
-func TestHashSHA(t *testing.T) {
+func Test_hashValue(t *testing.T) {
 	data := []byte("test data")
 	hashed, err := hashValue(data)
 	require.NoError(t, err)
@@ -18,7 +18,7 @@ func TestHashSHA(t *testing.T) {
 }
 
 // Test for [getRandEncrypt] function.
-func TestGetRandEncrypt(t *testing.T) {
+func Test_getRandEncrypt(t *testing.T) {
 	t.Run("valid getRandEncrypt", func(t *testing.T) {
 		size := 32
 		encrypted, err := getRandEncrypt(size)
@@ -35,7 +35,7 @@ func TestGetRandEncrypt(t *testing.T) {
 }
 
 // Test for [saltKey] function.
-func TestSaltValue(t *testing.T) {
+func Test_saltKey(t *testing.T) {
 	var key fernet.Key
 	err := key.Generate()
 	require.NoError(t, err)
@@ -48,7 +48,7 @@ func TestSaltValue(t *testing.T) {
 }
 
 // Test for [GetKey] function.
-func TestCreateReadKey(t *testing.T) {
+func Test_GetKey(t *testing.T) {
 	keyPath := "test_key"
 	hostUser := "test hu"
 	hostUserHash, err := hashValue([]byte(hostUser))

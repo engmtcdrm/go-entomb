@@ -8,7 +8,7 @@ import (
 )
 
 // Tests for [crypt.DefaultValidateTombName] function.
-func TestDefaultValidateTombName(t *testing.T) {
+func Test_DefaultValidateTombName(t *testing.T) {
 	t.Run("valid name", func(t *testing.T) {
 		err := crypt.DefaultValidateTombName("valid_name-123")
 		require.NoError(t, err)

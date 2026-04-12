@@ -15,7 +15,7 @@ const (
 )
 
 // Tests for [GetKeyHostUser] function.
-func TestGetKeyHostUser(t *testing.T) {
+func Test_GetKeyHostUser(t *testing.T) {
 	t.Run("test with host and user", func(t *testing.T) {
 		keyPath := path.Join(t.TempDir(), "test_key")
 		key, err := entomb.GetKeyHostUser(keyPath, true, true)
@@ -75,7 +75,7 @@ func TestGetKeyHostUser(t *testing.T) {
 }
 
 // Tests for [GetKey] function.
-func TestGetKey(t *testing.T) {
+func Test_GetKey(t *testing.T) {
 	t.Run("test with valid passphrase", func(t *testing.T) {
 		keyPath := path.Join(t.TempDir(), "test_key")
 		key, err := entomb.GetKey(keyPath, []byte(testPassphrase))

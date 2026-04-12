@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestEncrypt(t *testing.T) {
+func Test_Encrypt(t *testing.T) {
 	t.Run("test valid key and message", func(t *testing.T) {
 		keyPath := path.Join(t.TempDir(), "test_key")
 		key, err := entomb.GetKeyHostUser(keyPath, true, true)
@@ -55,7 +55,7 @@ func TestEncrypt(t *testing.T) {
 	})
 }
 
-func TestDecrypt(t *testing.T) {
+func Test_Decrypt(t *testing.T) {
 	t.Run("test valid key and message", func(t *testing.T) {
 		keyPath := path.Join(t.TempDir(), "test_key")
 		key, err := entomb.GetKeyHostUser(keyPath, true, true)

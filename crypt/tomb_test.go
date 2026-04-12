@@ -8,7 +8,7 @@ import (
 )
 
 // Tests for [crypt.NewTomb] function.
-func TestNewTomb(t *testing.T) {
+func Test_NewTomb(t *testing.T) {
 	t.Run("create tomb", func(t *testing.T) {
 		name := "mytomb"
 		path := "/path/to/mytomb"

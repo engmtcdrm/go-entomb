@@ -15,7 +15,7 @@ const (
 )
 
 // Tests for [NewCrypt] function.
-func TestNewCrypt(t *testing.T) {
+func Test_NewCrypt(t *testing.T) {
 	t.Run("valid create crypt instance", func(t *testing.T) {
 		cryptInstance := initCrypt(t)
 		require.NotNil(t, cryptInstance)
@@ -81,7 +81,7 @@ func TestNewCrypt(t *testing.T) {
 }
 
 // Tests for [Crypt.ValidateTombNameFunc] function.
-func TestCryptValidateTombNameFunc(t *testing.T) {
+func Test_Crypt_ValidateTombNameFunc(t *testing.T) {
 	cryptInstance := initCrypt(t)
 
 	t.Run("nil func", func(t *testing.T) {
@@ -99,7 +99,7 @@ func TestCryptValidateTombNameFunc(t *testing.T) {
 }
 
 // Tests for [Crypt.TombFileExt] function.
-func TestCryptTombFileExt(t *testing.T) {
+func Test_Crypt_TombFileExt(t *testing.T) {
 	cryptInstance := initCrypt(t)
 
 	t.Run("valid extension", func(t *testing.T) {
@@ -118,7 +118,7 @@ func TestCryptTombFileExt(t *testing.T) {
 }
 
 // Tests for [Crypt.Desecrate] function.
-func TestCryptDesecrate(t *testing.T) {
+func Test_Crypt_Desecrate(t *testing.T) {
 	cryptInstance := initCrypt(t)
 	_ = cryptInstance
 
@@ -152,7 +152,7 @@ func TestCryptDesecrate(t *testing.T) {
 }
 
 // Tests for [Crypt.DesecrateAll] function.
-func TestCryptDesecrateAll(t *testing.T) {
+func Test_Crypt_DesecrateAll(t *testing.T) {
 	cryptInstance := initCrypt(t)
 
 	t.Run("delete all tombs", func(t *testing.T) {
@@ -180,7 +180,7 @@ func TestCryptDesecrateAll(t *testing.T) {
 }
 
 // Tests for [Crypt.Entomb] function.
-func TestCryptEntomb(t *testing.T) {
+func Test_Crypt_Entomb(t *testing.T) {
 	cryptInstance := initCrypt(t)
 	testMsg := []byte("testdata")
 
@@ -241,7 +241,7 @@ func TestCryptEntomb(t *testing.T) {
 }
 
 // Tests for [Crypt.EntombFromFile] function.
-func TestCryptEntombFromFile(t *testing.T) {
+func Test_Crypt_EntombFromFile(t *testing.T) {
 	cryptInstance := initCrypt(t)
 	testMsg := []byte("testdata")
 
@@ -336,7 +336,7 @@ func TestCryptEntombFromFile(t *testing.T) {
 }
 
 // Tests for [Crypt.Epitaph] function.
-func TestCryptEpitaph(t *testing.T) {
+func Test_Crypt_Epitaph(t *testing.T) {
 	cryptInstance := initCrypt(t)
 
 	t.Run("empty crypt", func(t *testing.T) {
@@ -357,7 +357,7 @@ func TestCryptEpitaph(t *testing.T) {
 }
 
 // Tests for [Crypt.Exhume] function.
-func TestCryptExhume(t *testing.T) {
+func Test_Crypt_Exhume(t *testing.T) {
 	cryptInstance := initCrypt(t)
 	testMsg := []byte("testdata")
 
@@ -409,7 +409,7 @@ func TestCryptExhume(t *testing.T) {
 }
 
 // Tests for [Crypt.initializeTombsPath] function.
-func TestCryptInitializeTombsPath(t *testing.T) {
+func Test_Crypt_initializeTombsPath(t *testing.T) {
 	t.Run("valid initialization", func(t *testing.T) {
 		cryptInstance := initCrypt(t)
 		cryptInstance.tombsPath = t.TempDir()
@@ -454,12 +454,12 @@ func TestCryptInitializeTombsPath(t *testing.T) {
 }
 
 // Tests for [Crypt.getTombs] function.
-func TestCryptGetTombs(t *testing.T) {
+func Test_Crypt_getTombs(t *testing.T) {
 	// Need to implement tests
 }
 
 // Tests for [Crypt.walkTombsDirFunc] function.
-func TestCryptWalkTombsDirFunc(t *testing.T) {
+func Test_Crypt_walkTombsDirFunc(t *testing.T) {
 	cryptInstance := initCrypt(t)
 	t.Run("valid walkTombsDirFunc", func(t *testing.T) {
 		walkFunc := cryptInstance.walkTombsDirFunc(cryptInstance.tombs)
@@ -512,7 +512,7 @@ func TestCryptWalkTombsDirFunc(t *testing.T) {
 }
 
 // Tests for [Crypt.newTomb] function.
-func TestCryptNewTomb(t *testing.T) {
+func Test_Crypt_newTomb(t *testing.T) {
 	cryptInstance := initCrypt(t)
 	_ = cryptInstance
 
@@ -532,7 +532,7 @@ func TestCryptNewTomb(t *testing.T) {
 }
 
 // Tests for [Crypt.validateName] function.
-func TestCryptValidateName(t *testing.T) {
+func Test_Crypt_validateName(t *testing.T) {
 	cryptInstance := initCrypt(t)
 
 	t.Run("valid name", func(t *testing.T) {

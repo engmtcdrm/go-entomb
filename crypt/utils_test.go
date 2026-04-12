@@ -11,7 +11,7 @@ import (
 )
 
 // Tests for [cleanAbsPath] function.
-func TestCleanAbsPath(t *testing.T) {
+func Test_cleanAndValidatePath(t *testing.T) {
 	t.Run("valid path with environment variable and tilde", func(t *testing.T) {
 		err := os.Setenv("TEST_VAR", "testvalue")
 		require.NoError(t, err)
@@ -73,7 +73,7 @@ func TestCleanAbsPath(t *testing.T) {
 }
 
 // Tests for [clearMsg] function.
-func TestClearMsg(t *testing.T) {
+func Test_clearMsg(t *testing.T) {
 	t.Run("valid byte slice with content", func(t *testing.T) {
 		msg := []byte("sensitive data")
 		expected := bytes.Repeat([]byte{0}, len(msg))
@@ -97,7 +97,7 @@ func TestClearMsg(t *testing.T) {
 }
 
 // Tests for [expandTilde] function.
-func TestExpandTilde(t *testing.T) {
+func Test_expandTilde(t *testing.T) {
 	t.Run("valid path with tilde for expansion", func(t *testing.T) {
 		path, err := expandTilde("~/testdir")
 		require.NoError(t, err)
@@ -133,7 +133,7 @@ func TestExpandTilde(t *testing.T) {
 }
 
 // Tests for [resolveEnvVars] function.
-func TestResolveEnvVars(t *testing.T) {
+func Test_resolveEnvVars(t *testing.T) {
 	t.Run("valid path with env var exists", func(t *testing.T) {
 		err := os.Setenv("TEST_VAR", "testvalue")
 		require.NoError(t, err)
@@ -154,7 +154,7 @@ func TestResolveEnvVars(t *testing.T) {
 }
 
 // Tests for [isDirEmpty] function.
-func TestIsDirEmpty(t *testing.T) {
+func Test_isDirEmpty(t *testing.T) {
 	t.Run("valid path with empty directory", func(t *testing.T) {
 		isEmpty, err := isDirEmpty(t.TempDir())
 		require.NoError(t, err)
@@ -180,7 +180,7 @@ func TestIsDirEmpty(t *testing.T) {
 }
 
 // Tests for [trimSpaceBytes] function.
-func TestTrimSpaceBytes(t *testing.T) {
+func Test_trimSpaceBytes(t *testing.T) {
 	helloWorld := "Hello, World!"
 
 	t.Run("byte slice with leading and trailing spaces", func(t *testing.T) {

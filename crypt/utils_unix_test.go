@@ -10,7 +10,7 @@ import (
 )
 
 // Tests for [isInvalidPath] function.
-func TestIsInvalidPath(t *testing.T) {
+func Test_isInvalidPath(t *testing.T) {
 	t.Run("valid path", func(t *testing.T) {
 		isInvalid := isInvalidPath(t.TempDir())
 		require.False(t, isInvalid)
