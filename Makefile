@@ -1,21 +1,32 @@
-.PHONY: build run test testv
+.PHONY: build run test testv testcover testcoverall
 
 build:
 	@echo "Size before build:"; \
-	ls -la examples/simple |grep simple; \
-	ls -lh examples/simple |grep simple; \
+	ls -la examples |grep examples; \
+	ls -lh examples |grep examples; \
 	echo "\nSize after build:"; \
-	cd examples/simple; \
-	go build --ldflags "-s -w" -o simple; \
-	ls -la |grep simple; \
-	ls -lh |grep simple; \
+	cd examples; \
+	go build --ldflags "-s -w" -o examples; \
+	ls -la |grep examples; \
+	ls -lh |grep examples; \
 	cd ..
 
+doc:
+	@gomarkdoc ./... --exclude-dirs ./examples/...
+
 run:
-	@go run examples/simple/main.go
+	@cd examples; \
+	go run main.go; \
+	cd ..
 
 test:
 	@go test -timeout 30s ./...
 
 testv:
 	@go test -timeout 30s -v ./...
+
+testcover:
+	@go test -coverprofile=coverage.out && go tool cover -html=coverage.out -o coverage.html
+
+testcoverall:
+	@go test ./... -coverprofile=coverage.out && go tool cover -html=coverage.out -o coverage.html

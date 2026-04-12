@@ -1,45 +1,48 @@
 package entomb
 
 import (
-	"bytes"
 	"crypto/rand"
 	"crypto/sha512"
-	"errors"
+	"fmt"
 	"log"
-	"log/slog"
 	"math/big"
-	"os"
+	"os/user"
+	"strings"
 
 	"github.com/fernet/fernet-go"
 )
 
-// The code below is intentionally uncommented in an attempt to obfuscate and
-// make it harder to understand. There are intentional redundant calls to try
-// again, to obfuscate the code even further.
+const maxRandomHashDataSize = 9901 // Magic number for maximum random hash data size
 
-var size int
+var hashSize int
 
 func init() {
-	hash, err := hashSHA()
+	hash, err := hashValue(nil)
 	if err != nil {
 		log.Fatalf("Failed to generate hash: %v", err)
 	}
-	size = len(hash)
+	hashSize = len(hash)
 }
 
+// getRandEncrypt generates random data of size s, encrypts it with a random
+// Fernet key, and returns the encrypted data.
 func getRandEncrypt(s int) ([]byte, error) {
+	if s < 0 {
+		return nil, fmt.Errorf("invalid size: %d", s)
+	}
+
 	d := make([]byte, s)
 	_, err := rand.Read(d)
 	if err != nil {
 		return nil, err
 	}
 
-	var k fernet.Key
-	if err := k.Generate(); err != nil {
+	var key fernet.Key
+	if err := key.Generate(); err != nil {
 		return nil, err
 	}
 
-	t, err := fernet.EncryptAndSign(d, &k)
+	t, err := fernet.EncryptAndSign(d, &key)
 	if err != nil {
 		return nil, err
 	}
@@ -47,130 +50,73 @@ func getRandEncrypt(s int) ([]byte, error) {
 	return t, nil
 }
 
-func saltValue(k fernet.Key, data []byte, hu []byte) ([]byte, error) {
-	r, err := rand.Int(rand.Reader, big.NewInt(9001))
-	if err != nil {
-		return nil, err
+// hashValue returns a hash of the given data. If data is nil or empty, it
+// generates random data with a length between 1000 and [maxRandomHashDataSize]
+// bytes to hash.
+func hashValue(data []byte) ([]byte, error) {
+	if data == nil {
+		data = []byte{}
 	}
-	r = r.Add(r, big.NewInt(1000))
-
-	e1, err := getRandEncrypt(int(r.Int64()))
-	if err != nil {
-		return nil, err
-	}
-
-	e2, err := getRandEncrypt(size)
-	if err != nil {
-		return nil, err
-	}
-
-	hs, err := hashSHA([]byte(hu))
-	if err != nil {
-		return nil, err
-	}
-
-	e3, err := fernet.EncryptAndSign(hs, &k)
-	if err != nil {
-		return nil, err
-	}
-
-	e4, err := getRandEncrypt(int(r.Int64()))
-	if err != nil {
-		return nil, err
-	}
-
-	return append(append(append(append(e1, e2...), data...), e3...), e4...), nil
-}
-
-func createReadKey(keyPath string, hu string) (fernet.Key, error) {
-	var k fernet.Key
-
-	if _, err := os.Stat(keyPath); os.IsNotExist(err) {
-		slog.Debug("Key file does not exist. Creating a new key.")
-
-		if err := k.Generate(); err != nil {
-			return fernet.Key{}, err
-		}
-
-		sk, err := saltValue(k, []byte(k.Encode()), []byte(hu))
-		if err != nil {
-			return fernet.Key{}, err
-		}
-
-		if err = os.WriteFile(keyPath, sk, 0600); err != nil {
-			return fernet.Key{}, err
-		}
-
-		return k, nil
-	} else {
-		slog.Debug("Key file exists. Reading key from file.")
-
-		d, err := os.ReadFile(keyPath)
-		if err != nil {
-			return fernet.Key{}, err
-		}
-
-		e1, err := getRandEncrypt(size)
-		if err != nil {
-			return fernet.Key{}, err
-		}
-
-		e2, err := getRandEncrypt(size)
-		if err != nil {
-			return fernet.Key{}, err
-		}
-
-		if err := k.Generate(); err != nil {
-			return fernet.Key{}, err
-		}
-
-		ld := (len(d) - (len(e1) + len(k.Encode()) + len(e2))) / 2
-		d = d[ld : len(d)-ld]
-		kd := d[len(e1) : len(e1)+len(k.Encode())]
-		hue := d[len(e1)+len(k.Encode()):]
-
-		k3, err := fernet.DecodeKeys(string(kd))
-		if err != nil {
-			return fernet.Key{}, err
-		}
-
-		hud := fernet.VerifyAndDecrypt(hue, 0, k3)
-
-		hs, err := hashSHA([]byte(hu))
-		if err != nil {
-			return fernet.Key{}, err
-		}
-
-		if !bytes.Equal(hud, hs) {
-			return fernet.Key{}, errors.New("an error occurred during key verification")
-		}
-
-		return *k3[0], nil
-	}
-}
-
-func hashSHA(data ...[]byte) ([]byte, error) {
-	var d2h []byte
 
 	if len(data) == 0 {
-		n, err := rand.Int(rand.Reader, big.NewInt(9901))
+		n, err := rand.Int(rand.Reader, big.NewInt(maxRandomHashDataSize))
 		if err != nil {
 			return nil, err
 		}
-		n = n.Add(n, big.NewInt(100))
+		n = n.Add(n, big.NewInt(1000)) // Ensure at least 1000 bytes
 
-		d2h = make([]byte, n.Int64())
-		_, err = rand.Read(d2h)
+		data = make([]byte, n.Int64())
+		_, err = rand.Read(data)
 		if err != nil {
 			return nil, err
 		}
-	} else {
-		d2h = data[0]
 	}
 
 	h := sha512.New()
-
-	h.Write(d2h)
+	_, err := h.Write(data)
+	if err != nil {
+		return nil, err
+	}
 
 	return h.Sum(nil), nil
+}
+
+func getHostUser(useHost bool, useUser bool) ([]byte, error) {
+	var hostUser string
+	var err error
+
+	if useHost {
+		hostUser, err = getHost()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if useUser {
+		cu, err := user.Current()
+		if err != nil {
+			return nil, err
+		}
+
+		hostUser += cu.Username
+	}
+
+	return []byte(hostUser), nil
+}
+
+// getHost retrieves the machine ID of the host system.
+func getHost() (string, error) {
+	host, err := machineID()
+	if err != nil {
+		return "", err
+	}
+
+	// Remove newlines and tabs from machine ID
+	replacer := strings.NewReplacer(
+		"\n", "",
+		"\t", "",
+		"\r", "",
+	)
+	hostStr := replacer.Replace(string(host))
+	return hostStr, nil
 }

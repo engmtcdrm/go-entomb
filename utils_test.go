@@ -5,52 +5,67 @@ import (
 	"testing"
 
 	"github.com/fernet/fernet-go"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestHashSHA(t *testing.T) {
+// Test for [hashValue] function.
+func Test_hashValue(t *testing.T) {
 	data := []byte("test data")
-	hashed, err := hashSHA(data)
-	assert.NoError(t, err)
-	assert.NotNil(t, hashed)
-	assert.Equal(t, 64, len(hashed))
+	hashed, err := hashValue(data)
+	require.NoError(t, err)
+	require.NotNil(t, hashed)
+	require.Equal(t, 64, len(hashed))
 }
 
-func TestGetRandEncrypt(t *testing.T) {
-	size := 32
-	encrypted, err := getRandEncrypt(size)
-	assert.NoError(t, err)
-	assert.NotNil(t, encrypted)
+// Test for [getRandEncrypt] function.
+func Test_getRandEncrypt(t *testing.T) {
+	t.Run("valid getRandEncrypt", func(t *testing.T) {
+		size := 32
+		encrypted, err := getRandEncrypt(size)
+		require.NoError(t, err)
+		require.NotNil(t, encrypted)
+	})
+
+	t.Run("invalid getRandEncrypt with negative size", func(t *testing.T) {
+		size := -1
+		encrypted, err := getRandEncrypt(size)
+		require.Error(t, err)
+		require.Nil(t, encrypted)
+	})
 }
 
-func TestSaltValue(t *testing.T) {
-	var k fernet.Key
-	err := k.Generate()
-	assert.NoError(t, err)
+// Test for [saltKey] function.
+func Test_saltKey(t *testing.T) {
+	var key fernet.Key
+	err := key.Generate()
+	require.NoError(t, err)
 
 	data := []byte("test data")
-	hu := []byte("test hu")
-	salted, err := saltValue(k, data, hu)
-	assert.NoError(t, err)
-	assert.NotNil(t, salted)
+	hostUser := []byte("test hu")
+	salted, _, err := saltKey(key, data, hostUser)
+	require.NoError(t, err)
+	require.NotNil(t, salted)
 }
 
-func TestCreateReadKey(t *testing.T) {
+// Test for [GetKey] function.
+func Test_GetKey(t *testing.T) {
 	keyPath := "test_key"
-	hu := "test hu"
+	hostUser := "test hu"
+	hostUserHash, err := hashValue([]byte(hostUser))
+	require.NoError(t, err)
 
 	// Ensure the key file does not exist before the test
 	os.Remove(keyPath)
 
 	// Test key creation
-	key, err := createReadKey(keyPath, hu)
-	assert.NoError(t, err)
-	assert.NotNil(t, key)
+	key, err := GetKey(keyPath, hostUserHash)
+	require.NoError(t, err)
+	require.NotNil(t, key)
 
 	// Test key reading
-	readKey, err := createReadKey(keyPath, hu)
-	assert.NoError(t, err)
-	assert.Equal(t, key, readKey)
+	readKey, err := GetKey(keyPath, hostUserHash)
+	require.NoError(t, err)
+	require.Equal(t, key, readKey)
 
 	// Clean up
 	os.Remove(keyPath)
