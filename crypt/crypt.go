@@ -227,19 +227,6 @@ func (c *Crypt) EntombFromFile(name string, filePath string, cleanup bool) error
 	return nil
 }
 
-// Epitaph returns a slice of all tombs. It returns an empty slice if there are no tombs.
-func (c *Crypt) Epitaph() []*Tomb {
-	c.tombsMu.RLock()
-	defer c.tombsMu.RUnlock()
-
-	var tombs []*Tomb
-	for _, tomb := range c.tombs {
-		tombs = append(tombs, tomb)
-	}
-
-	return tombs
-}
-
 // Exhume retrieves and decrypts the message from the tomb with the given name. It returns an
 // error if the tomb does not exist, if there is an issue reading the tomb file, or if there
 // is an issue decrypting the message.
@@ -271,6 +258,37 @@ func (c *Crypt) Exhume(name string) ([]byte, error) {
 	}
 
 	return msg, nil
+}
+
+// Tombs returns a slice of all tombs. It returns an empty slice if there are no tombs.
+func (c *Crypt) Tombs() []*Tomb {
+	c.tombsMu.RLock()
+	defer c.tombsMu.RUnlock()
+
+	var tombs []*Tomb
+	for _, tomb := range c.tombs {
+		tombs = append(tombs, tomb)
+	}
+
+	return tombs
+}
+
+// TombExists checks if a tomb with the given name exists. If the name is empty
+// or invalid, it returns false.
+func (c *Crypt) TombExists(name string) bool {
+	if name == "" {
+		return false
+	}
+
+	if err := c.validateName(name); err != nil {
+		return false
+	}
+
+	c.tombsMu.RLock()
+	defer c.tombsMu.RUnlock()
+
+	_, exists := c.tombs[name]
+	return exists
 }
 
 // initializeTombsPath validates the tombs path, creates it if it doesn't exist,

@@ -359,27 +359,6 @@ func Test_Crypt_EntombFromFile(t *testing.T) {
 	})
 }
 
-// Tests for [Crypt.Epitaph] function.
-func Test_Crypt_Epitaph(t *testing.T) {
-	cryptInstance := initCrypt(t)
-
-	t.Run("empty crypt", func(t *testing.T) {
-		tombs := cryptInstance.Epitaph()
-		require.Empty(t, tombs)
-	})
-
-	t.Run("non-empty crypt", func(t *testing.T) {
-		testMsg := []byte("testdata")
-
-		err := cryptInstance.Entomb("testtomb", testMsg)
-		require.NoError(t, err)
-
-		tombs := cryptInstance.Epitaph()
-		require.NotEmpty(t, tombs)
-		require.Len(t, tombs, 1)
-	})
-}
-
 // Tests for [Crypt.Exhume] function.
 func Test_Crypt_Exhume(t *testing.T) {
 	cryptInstance := initCrypt(t)
@@ -429,6 +408,57 @@ func Test_Crypt_Exhume(t *testing.T) {
 		result, err := cryptInstance.Exhume("testtomb")
 		require.Error(t, err)
 		require.Nil(t, result)
+	})
+}
+
+// Tests for [Crypt.Tombs] function.
+func Test_Crypt_Tombs(t *testing.T) {
+	cryptInstance := initCrypt(t)
+
+	t.Run("empty crypt", func(t *testing.T) {
+		tombs := cryptInstance.Tombs()
+		require.Empty(t, tombs)
+	})
+
+	t.Run("non-empty crypt", func(t *testing.T) {
+		testMsg := []byte("testdata")
+
+		err := cryptInstance.Entomb("testtomb", testMsg)
+		require.NoError(t, err)
+
+		tombs := cryptInstance.Tombs()
+		require.NotEmpty(t, tombs)
+		require.Len(t, tombs, 1)
+	})
+}
+
+// Tests for [Crypt.TombExists] function.
+func Test_Crypt_TombExists(t *testing.T) {
+	cryptInstance := initCrypt(t)
+
+	t.Run("tomb does not exist", func(t *testing.T) {
+		exists := cryptInstance.TombExists("nonexistent")
+		require.False(t, exists)
+	})
+
+	t.Run("tomb exists", func(t *testing.T) {
+		testMsg := []byte("testdata")
+
+		err := cryptInstance.Entomb("testtomb", testMsg)
+		require.NoError(t, err)
+
+		exists := cryptInstance.TombExists("testtomb")
+		require.True(t, exists)
+	})
+
+	t.Run("empty tomb name", func(t *testing.T) {
+		exists := cryptInstance.TombExists("")
+		require.False(t, exists)
+	})
+
+	t.Run("invalid tomb name", func(t *testing.T) {
+		exists := cryptInstance.TombExists("\x00not-valid")
+		require.False(t, exists)
 	})
 }
 
