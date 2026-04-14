@@ -12,7 +12,7 @@
 //   - Encrypt and store messages as tomb files with [Crypt.Entomb]
 //   - Decrypt and retrieve messages with [Crypt.Exhume]
 //   - Import messages directly from files with [Crypt.EntombFromFile]
-//   - List all stored tombs with [Crypt.Epitaph]
+//   - List all stored tombs with [Crypt.Tombs]
 //   - Delete individual or all tombs with [Crypt.Desecrate] and [Crypt.DesecrateAll]
 //   - Configurable tomb file extensions and name validation
 //   - Thread-safe access to the underlying tomb store
