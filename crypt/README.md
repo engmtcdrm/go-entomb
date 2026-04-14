@@ -18,7 +18,7 @@ Key features:
 - Encrypt and store messages as tomb files with [Crypt.Entomb](<#Crypt.Entomb>)
 - Decrypt and retrieve messages with [Crypt.Exhume](<#Crypt.Exhume>)
 - Import messages directly from files with [Crypt.EntombFromFile](<#Crypt.EntombFromFile>)
-- List all stored tombs with [Crypt.Epitaph](<#Crypt.Epitaph>)
+- List all stored tombs with [Crypt.Tombs](<#Crypt.Tombs>)
 - Delete individual or all tombs with [Crypt.Desecrate](<#Crypt.Desecrate>) and [Crypt.DesecrateAll](<#Crypt.DesecrateAll>)
 - Configurable tomb file extensions and name validation
 - Thread\-safe access to the underlying tomb store
@@ -34,9 +34,10 @@ Key features:
   - [func \(c \*Crypt\) DesecrateAll\(\) error](<#Crypt.DesecrateAll>)
   - [func \(c \*Crypt\) Entomb\(name string, msg \[\]byte\) error](<#Crypt.Entomb>)
   - [func \(c \*Crypt\) EntombFromFile\(name string, filePath string, cleanup bool\) error](<#Crypt.EntombFromFile>)
-  - [func \(c \*Crypt\) Epitaph\(\) \[\]\*Tomb](<#Crypt.Epitaph>)
   - [func \(c \*Crypt\) Exhume\(name string\) \(\[\]byte, error\)](<#Crypt.Exhume>)
+  - [func \(c \*Crypt\) TombExists\(name string\) bool](<#Crypt.TombExists>)
   - [func \(c \*Crypt\) TombFileExt\(ext string\) \(\*Crypt, error\)](<#Crypt.TombFileExt>)
+  - [func \(c \*Crypt\) Tombs\(\) \[\]\*Tomb](<#Crypt.Tombs>)
   - [func \(c \*Crypt\) ValidateTombNameFunc\(f func\(name string\) error\) \(\*Crypt, error\)](<#Crypt.ValidateTombNameFunc>)
 - [type Tomb](<#Tomb>)
   - [func NewTomb\(name, path string\) \(\*Tomb, error\)](<#NewTomb>)
@@ -150,23 +151,23 @@ func (c *Crypt) EntombFromFile(name string, filePath string, cleanup bool) error
 
 EntombFromFile reads the content of the file at filePath, encrypts it, and saves it as a tomb with the given name. If cleanup is true, it deletes the original file after successfully creating the tomb. It returns an error if the tomb name is invalid, if there is an issue reading the file, encrypting the message, saving the tomb file, or deleting the original file.
 
-<a name="Crypt.Epitaph"></a>
-### func \(\*Crypt\) [Epitaph](<https://github.com/engmtcdrm/go-entomb/blob/master/crypt/crypt.go#L231>)
-
-```go
-func (c *Crypt) Epitaph() []*Tomb
-```
-
-Epitaph returns a slice of all tombs. It returns an empty slice if there are no tombs.
-
 <a name="Crypt.Exhume"></a>
-### func \(\*Crypt\) [Exhume](<https://github.com/engmtcdrm/go-entomb/blob/master/crypt/crypt.go#L246>)
+### func \(\*Crypt\) [Exhume](<https://github.com/engmtcdrm/go-entomb/blob/master/crypt/crypt.go#L233>)
 
 ```go
 func (c *Crypt) Exhume(name string) ([]byte, error)
 ```
 
 Exhume retrieves and decrypts the message from the tomb with the given name. It returns an error if the tomb does not exist, if there is an issue reading the tomb file, or if there is an issue decrypting the message.
+
+<a name="Crypt.TombExists"></a>
+### func \(\*Crypt\) [TombExists](<https://github.com/engmtcdrm/go-entomb/blob/master/crypt/crypt.go#L278>)
+
+```go
+func (c *Crypt) TombExists(name string) bool
+```
+
+TombExists checks if a tomb with the given name exists. If the name is empty or invalid, it returns false.
 
 <a name="Crypt.TombFileExt"></a>
 ### func \(\*Crypt\) [TombFileExt](<https://github.com/engmtcdrm/go-entomb/blob/master/crypt/crypt.go#L88>)
@@ -176,6 +177,15 @@ func (c *Crypt) TombFileExt(ext string) (*Crypt, error)
 ```
 
 TombFileExt sets the file extension for tomb files. It returns an error if there is an issue retrieving the tombs after changing the extension.
+
+<a name="Crypt.Tombs"></a>
+### func \(\*Crypt\) [Tombs](<https://github.com/engmtcdrm/go-entomb/blob/master/crypt/crypt.go#L264>)
+
+```go
+func (c *Crypt) Tombs() []*Tomb
+```
+
+Tombs returns a slice of all tombs. It returns an empty slice if there are no tombs.
 
 <a name="Crypt.ValidateTombNameFunc"></a>
 ### func \(\*Crypt\) [ValidateTombNameFunc](<https://github.com/engmtcdrm/go-entomb/blob/master/crypt/crypt.go#L76>)
