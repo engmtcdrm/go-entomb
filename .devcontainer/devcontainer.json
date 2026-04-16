@@ -1,21 +1,23 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/go .
 {
-	"name": "Go",
-	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/go:2-1.25-trixie",
-    "containerEnv": {
-        "GOROOT": "",
-        "GOTOOLCHAIN": "auto"
-    },
-    "postCreateCommand": "./.devcontainer/scripts/post-create-command.sh",
+	"name": "go-entomb Dev Container",
+	// Use Docker Compose for the devcontainer definition.
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "devcontainer",
+	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+	"remoteEnv": {
+		"WORKSPACE_FOLDER": "${containerWorkspaceFolder}"
+	},
+	"shutdownAction": "stopCompose",
+    "postCreateCommand": ["./.devcontainer/scripts/post-create-command.sh"],
+	"postAttachCommand": ["./.devcontainer/scripts/post-attach-command.sh"],
 	"customizations": {
         "vscode": {
             "extensions": [
                 "golang.go",
                 "ms-vscode.makefile-tools",
-				"SonarSource.sonarlint-vscode",
-				"GitHub.copilot-chat"
+				"SonarSource.sonarlint-vscode"
             ]
         }
     }

@@ -1,0 +1,8 @@
+services:
+  devcontainer:
+    image: mcr.microsoft.com/devcontainers/go:2-1.25-trixie
+    env_file:
+      - .env
+    volumes:
+      - ..:/workspaces/go-entomb:cached
+    command: sleep infinity

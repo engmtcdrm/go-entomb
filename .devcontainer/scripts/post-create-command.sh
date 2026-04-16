@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/bash
 
 echo "Running Post Create Command script..."
 
