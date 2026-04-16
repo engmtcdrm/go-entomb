@@ -4,5 +4,6 @@ services:
     env_file:
       - .env
     volumes:
+      - ~/.ssh:/home/vscode/.ssh:ro
       - ..:/workspaces/go-entomb:cached
     command: sleep infinity
