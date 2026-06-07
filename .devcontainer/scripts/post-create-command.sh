@@ -12,3 +12,5 @@ if [ -f "$installNodeScript" ]; then
 else
   echo "Node.js installation script not found at $installNodeScript"
 fi
+
+go install github.com/princjef/gomarkdoc/cmd/gomarkdoc@latest
