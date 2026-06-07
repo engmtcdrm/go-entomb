@@ -19,7 +19,7 @@ Package testutils provides utility functions and types for testing purposes.
 
 
 <a name="CreateTempFile"></a>
-## func [CreateTempFile](<https://github.com/engmtcdrm/go-entomb/blob/master/internal/testutils/create.go#L16>)
+## func [CreateTempFile](<https://github.com/engmtcdrm/go-entomb/blob/main/internal/testutils/create.go#L16>)
 
 ```go
 func CreateTempFile(dir, name string) (*os.File, error)
@@ -28,7 +28,7 @@ func CreateTempFile(dir, name string) (*os.File, error)
 CreateTempFile creates a temporary file using [os.CreateTemp](<https://pkg.go.dev/os/#CreateTemp>) in the given directory with the specified name pattern if it contains a wildcard "\*". If the name pattern does not contain a wildcard, a temporary file is created using [os.OpenFile](<https://pkg.go.dev/os/#OpenFile>) with the exact name. The function writes the base name of the temporary file to its contents and returns the created temporary file.
 
 <a name="PermissionTest"></a>
-## func [PermissionTest](<https://github.com/engmtcdrm/go-entomb/blob/master/internal/testutils/permissions.go#L13>)
+## func [PermissionTest](<https://github.com/engmtcdrm/go-entomb/blob/main/internal/testutils/permissions.go#L13>)
 
 ```go
 func PermissionTest(filePermPath string, fn interface{}, args ...interface{}) error
@@ -37,7 +37,7 @@ func PermissionTest(filePermPath string, fn interface{}, args ...interface{}) er
 PermissionTest is a helper function to wrap another function that requires a file to have no permissions.
 
 <a name="PermissionTestReadOnly"></a>
-## func [PermissionTestReadOnly](<https://github.com/engmtcdrm/go-entomb/blob/master/internal/testutils/permissions.go#L54>)
+## func [PermissionTestReadOnly](<https://github.com/engmtcdrm/go-entomb/blob/main/internal/testutils/permissions.go#L54>)
 
 ```go
 func PermissionTestReadOnly(filePermPath string, fn interface{}, args ...interface{}) error

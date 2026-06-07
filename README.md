@@ -21,7 +21,7 @@ Package entomb allows for the encryption and decryption of data using the Fernet
 
 
 <a name="Decrypt"></a>
-## func [Decrypt](<https://github.com/engmtcdrm/go-entomb/blob/master/crypto.go#L48>)
+## func [Decrypt](<https://github.com/engmtcdrm/go-entomb/blob/main/crypto.go#L48>)
 
 ```go
 func Decrypt(key *Key, data []byte) ([]byte, error)
@@ -30,7 +30,7 @@ func Decrypt(key *Key, data []byte) ([]byte, error)
 Decrypts the data and returns the decrypted message.
 
 <a name="Encrypt"></a>
-## func [Encrypt](<https://github.com/engmtcdrm/go-entomb/blob/master/crypto.go#L12>)
+## func [Encrypt](<https://github.com/engmtcdrm/go-entomb/blob/main/crypto.go#L12>)
 
 ```go
 func Encrypt(key *Key, msg []byte) ([]byte, error)
@@ -39,7 +39,7 @@ func Encrypt(key *Key, msg []byte) ([]byte, error)
 Encrypts the message and returns the encrypted data.
 
 <a name="Key"></a>
-## type [Key](<https://github.com/engmtcdrm/go-entomb/blob/master/key.go#L16-L19>)
+## type [Key](<https://github.com/engmtcdrm/go-entomb/blob/main/key.go#L16-L19>)
 
 Key represents an encryption key with its associated Fernet key and encrypted passphrase.
 
@@ -51,7 +51,7 @@ type Key struct {
 ```
 
 <a name="GetKey"></a>
-### func [GetKey](<https://github.com/engmtcdrm/go-entomb/blob/master/key.go#L34>)
+### func [GetKey](<https://github.com/engmtcdrm/go-entomb/blob/main/key.go#L34>)
 
 ```go
 func GetKey(keyPath string, passphrase []byte) (*Key, error)
@@ -60,7 +60,7 @@ func GetKey(keyPath string, passphrase []byte) (*Key, error)
 GetKey generates a new encryption key or reads an existing one from the specified path. The passphrase is used for verfication when reading the key and tomb decryption.
 
 <a name="GetKeyHostUser"></a>
-### func [GetKeyHostUser](<https://github.com/engmtcdrm/go-entomb/blob/master/key.go#L23>)
+### func [GetKeyHostUser](<https://github.com/engmtcdrm/go-entomb/blob/main/key.go#L23>)
 
 ```go
 func GetKeyHostUser(keyPath string, useHost, useUser bool) (*Key, error)
