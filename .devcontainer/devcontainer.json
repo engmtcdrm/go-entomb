@@ -16,7 +16,6 @@
         "vscode": {
             "extensions": [
                 "golang.go",
-                "ms-vscode.makefile-tools",
 				"SonarSource.sonarlint-vscode"
             ]
         }

@@ -87,7 +87,7 @@ var (
 ```
 
 <a name="DefaultValidateTombName"></a>
-## func [DefaultValidateTombName](<https://github.com/engmtcdrm/go-entomb/blob/master/crypt/regex.go#L14>)
+## func [DefaultValidateTombName](<https://github.com/engmtcdrm/go-entomb/blob/main/crypt/regex.go#L14>)
 
 ```go
 func DefaultValidateTombName(s string) error
@@ -96,7 +96,7 @@ func DefaultValidateTombName(s string) error
 DefaultValidateTombName checks if the tomb name contains only valid characters. Valid characters are alphanumeric, hyphens, underscores, and slashes.
 
 <a name="Crypt"></a>
-## type [Crypt](<https://github.com/engmtcdrm/go-entomb/blob/master/crypt/crypt.go#L20-L31>)
+## type [Crypt](<https://github.com/engmtcdrm/go-entomb/blob/main/crypt/crypt.go#L20-L31>)
 
 
 
@@ -107,7 +107,7 @@ type Crypt struct {
 ```
 
 <a name="NewCrypt"></a>
-### func [NewCrypt](<https://github.com/engmtcdrm/go-entomb/blob/master/crypt/crypt.go#L33>)
+### func [NewCrypt](<https://github.com/engmtcdrm/go-entomb/blob/main/crypt/crypt.go#L33>)
 
 ```go
 func NewCrypt(keyPath string, tombsPath string, useHost, useUser bool) (*Crypt, error)
@@ -116,7 +116,7 @@ func NewCrypt(keyPath string, tombsPath string, useHost, useUser bool) (*Crypt, 
 
 
 <a name="Crypt.Desecrate"></a>
-### func \(\*Crypt\) [Desecrate](<https://github.com/engmtcdrm/go-entomb/blob/master/crypt/crypt.go#L100>)
+### func \(\*Crypt\) [Desecrate](<https://github.com/engmtcdrm/go-entomb/blob/main/crypt/crypt.go#L100>)
 
 ```go
 func (c *Crypt) Desecrate(name string) error
@@ -125,7 +125,7 @@ func (c *Crypt) Desecrate(name string) error
 Desecrate deletes the tomb with the given name. It returns an error if the tomb does not exist or if there is an issue deleting the tomb file.
 
 <a name="Crypt.DesecrateAll"></a>
-### func \(\*Crypt\) [DesecrateAll](<https://github.com/engmtcdrm/go-entomb/blob/master/crypt/crypt.go#L125>)
+### func \(\*Crypt\) [DesecrateAll](<https://github.com/engmtcdrm/go-entomb/blob/main/crypt/crypt.go#L125>)
 
 ```go
 func (c *Crypt) DesecrateAll() error
@@ -134,7 +134,7 @@ func (c *Crypt) DesecrateAll() error
 DesecrateAll deletes all tombs. It returns an error if there is an issue deleting the tomb files.
 
 <a name="Crypt.Entomb"></a>
-### func \(\*Crypt\) [Entomb](<https://github.com/engmtcdrm/go-entomb/blob/master/crypt/crypt.go#L141>)
+### func \(\*Crypt\) [Entomb](<https://github.com/engmtcdrm/go-entomb/blob/main/crypt/crypt.go#L141>)
 
 ```go
 func (c *Crypt) Entomb(name string, msg []byte) error
@@ -143,7 +143,7 @@ func (c *Crypt) Entomb(name string, msg []byte) error
 Entomb encrypts the given message and saves it as a tomb with the given name. It returns an error if the tomb name is invalid, if there is an issue encrypting the message, or if there is an issue saving the tomb file.
 
 <a name="Crypt.EntombFromFile"></a>
-### func \(\*Crypt\) [EntombFromFile](<https://github.com/engmtcdrm/go-entomb/blob/master/crypt/crypt.go#L192>)
+### func \(\*Crypt\) [EntombFromFile](<https://github.com/engmtcdrm/go-entomb/blob/main/crypt/crypt.go#L192>)
 
 ```go
 func (c *Crypt) EntombFromFile(name string, filePath string, cleanup bool) error
@@ -152,7 +152,7 @@ func (c *Crypt) EntombFromFile(name string, filePath string, cleanup bool) error
 EntombFromFile reads the content of the file at filePath, encrypts it, and saves it as a tomb with the given name. If cleanup is true, it deletes the original file after successfully creating the tomb. It returns an error if the tomb name is invalid, if there is an issue reading the file, encrypting the message, saving the tomb file, or deleting the original file.
 
 <a name="Crypt.Exhume"></a>
-### func \(\*Crypt\) [Exhume](<https://github.com/engmtcdrm/go-entomb/blob/master/crypt/crypt.go#L233>)
+### func \(\*Crypt\) [Exhume](<https://github.com/engmtcdrm/go-entomb/blob/main/crypt/crypt.go#L233>)
 
 ```go
 func (c *Crypt) Exhume(name string) ([]byte, error)
@@ -161,7 +161,7 @@ func (c *Crypt) Exhume(name string) ([]byte, error)
 Exhume retrieves and decrypts the message from the tomb with the given name. It returns an error if the tomb does not exist, if there is an issue reading the tomb file, or if there is an issue decrypting the message.
 
 <a name="Crypt.TombExists"></a>
-### func \(\*Crypt\) [TombExists](<https://github.com/engmtcdrm/go-entomb/blob/master/crypt/crypt.go#L278>)
+### func \(\*Crypt\) [TombExists](<https://github.com/engmtcdrm/go-entomb/blob/main/crypt/crypt.go#L278>)
 
 ```go
 func (c *Crypt) TombExists(name string) bool
@@ -170,7 +170,7 @@ func (c *Crypt) TombExists(name string) bool
 TombExists checks if a tomb with the given name exists. If the name is empty or invalid, it returns false.
 
 <a name="Crypt.TombFileExt"></a>
-### func \(\*Crypt\) [TombFileExt](<https://github.com/engmtcdrm/go-entomb/blob/master/crypt/crypt.go#L88>)
+### func \(\*Crypt\) [TombFileExt](<https://github.com/engmtcdrm/go-entomb/blob/main/crypt/crypt.go#L88>)
 
 ```go
 func (c *Crypt) TombFileExt(ext string) (*Crypt, error)
@@ -179,7 +179,7 @@ func (c *Crypt) TombFileExt(ext string) (*Crypt, error)
 TombFileExt sets the file extension for tomb files. It returns an error if there is an issue retrieving the tombs after changing the extension.
 
 <a name="Crypt.Tombs"></a>
-### func \(\*Crypt\) [Tombs](<https://github.com/engmtcdrm/go-entomb/blob/master/crypt/crypt.go#L264>)
+### func \(\*Crypt\) [Tombs](<https://github.com/engmtcdrm/go-entomb/blob/main/crypt/crypt.go#L264>)
 
 ```go
 func (c *Crypt) Tombs() []*Tomb
@@ -188,7 +188,7 @@ func (c *Crypt) Tombs() []*Tomb
 Tombs returns a slice of all tombs. It returns an empty slice if there are no tombs.
 
 <a name="Crypt.ValidateTombNameFunc"></a>
-### func \(\*Crypt\) [ValidateTombNameFunc](<https://github.com/engmtcdrm/go-entomb/blob/master/crypt/crypt.go#L76>)
+### func \(\*Crypt\) [ValidateTombNameFunc](<https://github.com/engmtcdrm/go-entomb/blob/main/crypt/crypt.go#L76>)
 
 ```go
 func (c *Crypt) ValidateTombNameFunc(f func(name string) error) (*Crypt, error)
@@ -197,7 +197,7 @@ func (c *Crypt) ValidateTombNameFunc(f func(name string) error) (*Crypt, error)
 ValidateTombNameFunc sets a custom function to validate tomb names.
 
 <a name="Tomb"></a>
-## type [Tomb](<https://github.com/engmtcdrm/go-entomb/blob/master/crypt/tomb.go#L4-L7>)
+## type [Tomb](<https://github.com/engmtcdrm/go-entomb/blob/main/crypt/tomb.go#L4-L7>)
 
 Tomb represents an encrypted file with its name and path.
 
@@ -208,7 +208,7 @@ type Tomb struct {
 ```
 
 <a name="NewTomb"></a>
-### func [NewTomb](<https://github.com/engmtcdrm/go-entomb/blob/master/crypt/tomb.go#L10>)
+### func [NewTomb](<https://github.com/engmtcdrm/go-entomb/blob/main/crypt/tomb.go#L10>)
 
 ```go
 func NewTomb(name, path string) (*Tomb, error)
@@ -217,7 +217,7 @@ func NewTomb(name, path string) (*Tomb, error)
 NewTomb creates a new Tomb with the given name and path.
 
 <a name="Tomb.Name"></a>
-### func \(\*Tomb\) [Name](<https://github.com/engmtcdrm/go-entomb/blob/master/crypt/tomb.go#L26>)
+### func \(\*Tomb\) [Name](<https://github.com/engmtcdrm/go-entomb/blob/main/crypt/tomb.go#L26>)
 
 ```go
 func (t *Tomb) Name() string
@@ -226,7 +226,7 @@ func (t *Tomb) Name() string
 Name returns the name of the tomb.
 
 <a name="Tomb.Path"></a>
-### func \(\*Tomb\) [Path](<https://github.com/engmtcdrm/go-entomb/blob/master/crypt/tomb.go#L31>)
+### func \(\*Tomb\) [Path](<https://github.com/engmtcdrm/go-entomb/blob/main/crypt/tomb.go#L31>)
 
 ```go
 func (t *Tomb) Path() string

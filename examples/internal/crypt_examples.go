@@ -14,7 +14,7 @@ func CryptExample() {
 		os.Exit(1)
 	}
 
-	tombs := crypt2.Epitaph()
+	tombs := crypt2.Tombs()
 	for _, tomb := range tombs {
 		fmt.Println("Tomb:")
 		fmt.Println("  Name:", tomb.Name())
@@ -60,7 +60,7 @@ func CryptExample() {
 
 	// fmt.Println("All tombs desecrated")
 
-	tombs = crypt2.Epitaph()
+	tombs = crypt2.Tombs()
 	for _, tomb := range tombs {
 		fmt.Println("Tomb:")
 		fmt.Println("  Name:", tomb.Name())
